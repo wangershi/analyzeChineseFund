@@ -2,16 +2,23 @@ import requests
 import random
 import os
 import datetime
-from util import user_agent_list, referer_list
+import time
+from util import user_agent_list, referer_list, Fund, FundElement, parseStringIntoNumber
 from getLatestFund import get_fund_code
+from bs4 import BeautifulSoup 
 
-def crawlPorfolio(fund_code):
-    fund_code = str(fund_code)
+def crawlPorfolio(fundCode, fundName, fundType):
+    fund = Fund(fundCode, fundName, fundType)
+
+    fundCode = str(fundCode)
     folder = "./data/ccmx"
     if not os.path.exists(folder):
         os.mkdir(folder)
-    nameOfPage = "%s_%s.html" % (fund_code, datetime.datetime.now().strftime("%Y%m%d"))
+
+    # update every month, not every day
+    nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime("%Y%m"))
     pathOfPage = os.path.join(folder, nameOfPage)
+    data = ""
 
     # if the page exists on local file, then read it directly
     if os.path.exists(pathOfPage):
@@ -28,7 +35,13 @@ def crawlPorfolio(fund_code):
         # 如果不捕获异常，程序可能崩溃
         try:
             # TODO: use proxy to visit the website
-            req = requests.get("http://fundf10.eastmoney.com/ccmx_" + fund_code + ".html", timeout=3, headers=header)
+            # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=110011&topline=100&year=&month=&rt=0.9688781140527483
+            website = "http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=%s&topline=100&year=&month=&rt=0.9688781140527483" % fundCode
+            req = requests.get(website, timeout=3, headers=header)
+
+            # sleep for some time
+            time.sleep(random.randint(3, 6))
+
             req.encoding = 'utf-8'
             data = req.text
 
@@ -37,21 +50,59 @@ def crawlPorfolio(fund_code):
                 fw.write(data)
         except Exception as e:
             print(str(e))
-    print (data)
+    
+    if data:
+        # parse the data
+        data = data.split("\"")[1]
+        soup = BeautifulSoup(data, 'lxml')
+        for tr in soup.find_all('tr'):
+            td = tr.findChildren('td')
 
+            # TODO: the data is happened 3 months ago or eariler if len is 7, we can use it in the future
+            if (len(td) == 9):
+                # the first value must be number
+                try:
+                    #print (td)
+                    number = td[0].text.replace("*", "")
+                    index = int(number)
+                except:
+                    continue
+
+                # stockCode
+                stockCode = td[1].text
+
+                # stockName
+                stockName = td[2].text
+
+                # ratio
+                ratio = parseStringIntoNumber(td[6].text)
+
+                # number of shares
+                numberOfShares = parseStringIntoNumber(td[7].text)
+
+                # value of shares
+                valueOfShares = parseStringIntoNumber(td[8].text)
+
+                fundElement = FundElement(stockCode, stockName, ratio, numberOfShares, valueOfShares)
+
+                fund.Portfolio.append(fundElement)
+    return fund
 
 def crawlAllFundData():
     fund_code_list = get_fund_code()
 
-    listOfPortfolio = []
+    listOfFund = []
     for item in fund_code_list:
         # test in one fund
-        if item[0] != "110011":
-            continue
+        #if item[0] != "110011":
+        #    continue
 
-        fund_code = item[0]
-        portfolio = crawlPorfolio(fund_code)
-        listOfPortfolio.append(portfolio)
+        fundCode = item[0]
+        fundName = item[2]
+        fundType = item[3]
+        fund = crawlPorfolio(fundCode, fundName, fundType)
+        print (fund)
+        listOfFund.append(fund)
 
 if __name__ == "__main__":
     crawlAllFundData()

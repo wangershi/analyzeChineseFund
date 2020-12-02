@@ -15,3 +15,56 @@ referer_list = [
     'http://fund.eastmoney.com/110024.html',
     'http://fund.eastmoney.com/110025.html'
 ]
+
+def parseStringIntoNumber(inputString):
+	'''
+		parse string into number, return -1 if convert failed
+		Example:
+			"9.8%" -> 0.098
+			"1"	-> 1.0
+			"2.0" -> 2.0
+	'''
+	try:
+		inputString = inputString.replace(",", "")
+		if ("%" in inputString):
+			return float(inputString.replace("%", "")) / 100.0
+		else:
+			return float(inputString)
+	except:
+		return -1
+
+class FundElement:
+	def __init__(self, stockCode, stockName, ratio, numberOfShares, valueOfShares):
+		self.StockCode = stockCode
+		self.StockName = stockName
+		self.Ratio = ratio
+		self.NumberOfShares = numberOfShares
+		self.ValueOfShares = valueOfShares
+
+	def __str__(self):
+		returnStr = ""
+
+		for key in self.__dict__:
+			returnStr += "\t%s:\t%s\n" % (key, self.__dict__[key])
+
+		return returnStr
+
+class Fund:
+	def __init__(self, code, name, fundType):
+		self.Code = code
+		self.Name = name
+		self.FundType = fundType
+		self.Portfolio = []
+
+	def __str__(self):
+		returnStr = ""
+
+		for key in self.__dict__:
+			if key != "Portfolio":
+				returnStr += "%s:\t%s\n" % (key, self.__dict__[key])
+			else:
+				returnStr += "%s:\n" % key
+				for item in self.__dict__[key]:
+					returnStr += "%s\n" % item
+
+		return returnStr

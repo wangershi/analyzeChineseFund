@@ -29,7 +29,7 @@ def get_fund_code(forceCrawl=False):
         # 获取所有基金代码
         fund_code_js = req.content.decode()
 
-        fund_code = fund_code_js.split("= [")[-1].replace("];","")
+        fund_code = fund_code_js.split("= [")[-1].replace("];", "")
 
         # 正则批量提取
         fund_code = re.findall(r"[\[](.*?)[\]]", fund_code)
