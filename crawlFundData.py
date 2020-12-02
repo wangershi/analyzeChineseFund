@@ -3,7 +3,8 @@ import random
 import os
 import datetime
 import time
-from util import user_agent_list, referer_list, Fund, FundElement, parseStringIntoNumber
+import json
+from util import user_agent_list, referer_list, Fund, FundElement, parseStringIntoNumber, FundHistoricalValue
 from getLatestFund import get_fund_code
 from bs4 import BeautifulSoup 
 
@@ -142,6 +143,63 @@ def crawRisk(fundCode, fundName, fundType):
 
     return ""
 
+def crawHistoricalValue(fundCode, fundName, fundType):
+    fund = Fund(fundCode, fundName, fundType)
+
+    fundCode = str(fundCode)
+    folder = "./data/historicalValue"
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    # update every month, not every day
+    nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime("%Y%m"))
+    pathOfPage = os.path.join(folder, nameOfPage)
+    data = ""
+
+    # if the page exists on local file, then read it directly
+    if os.path.exists(pathOfPage):
+        # save the data into file
+        with open(pathOfPage, "r") as fr:
+            data = fr.read()
+    else:
+        # 获取一个随机user_agent和Referer
+        header = {'User-Agent': random.choice(user_agent_list),
+            'Referer': random.choice(referer_list)
+        }
+
+        # 使用try、except来捕获异常
+        # 如果不捕获异常，程序可能崩溃
+        try:
+            # TODO: use proxy to visit the website
+            # http://api.fund.eastmoney.com/f10/lsjz?callback=jQuery18308008424329839205_1606919908899&fundCode=110011&pageIndex=1&pageSize=20&startDate=&endDate=&_=1606919908921
+            website = "http://api.fund.eastmoney.com/f10/lsjz?callback=jQuery18308008424329839205_1606919908899&fundCode=%s&pageIndex=1&pageSize=1000&startDate=&endDate=&_=1606919908921" % fundCode
+            req = requests.get(website, timeout=3, headers=header)
+
+            # sleep for some time
+            time.sleep(random.randint(3, 6))
+
+            req.encoding = 'utf-8'
+            data = req.text
+
+            # save the data into file
+            with open(pathOfPage, "w") as fw:
+                fw.write(data)
+        except Exception as e:
+            print(str(e))
+    
+    if data:
+        data = data.split("(")[-1].split(")")[0]
+        data = json.loads(data)
+        for item in data["Data"]["LSJZList"]:
+            date = item["FSRQ"]
+            netAssetValue = item["DWJZ"]
+            accumulativeNetAssetValue = item["LJJZ"]
+            dividends = item["FHSP"]    # TODO: extract the dividends number
+            fundHistoricalValue = FundHistoricalValue(date, netAssetValue, accumulativeNetAssetValue, dividends)
+            print (fundHistoricalValue)
+
+    return ""
+
 def crawlAllFundData():
     fund_code_list = get_fund_code()
 
@@ -161,10 +219,13 @@ def crawlAllFundData():
         listOfFund.append(fund)
         '''
 
+        ''''
         risk = crawRisk(fundCode, fundName, fundType)
         if risk:
             print ("risk = %s" % risk)
+        '''
 
+        print (crawHistoricalValue(fundCode, fundName, fundType))
 
 if __name__ == "__main__":
     crawlAllFundData()

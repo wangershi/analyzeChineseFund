@@ -33,6 +33,21 @@ def parseStringIntoNumber(inputString):
 	except:
 		return -1
 
+class FundHistoricalValue:
+	def __init__(self, date, netAssetValue, accumulativeNetAssetValue, dividends):
+		self.Date = date
+		self.NetAssetValue = netAssetValue
+		self.AccumulativeNetAssetValue = accumulativeNetAssetValue
+		self.Dividends = dividends
+
+	def __str__(self):
+		returnStr = ""
+
+		for key in self.__dict__:
+			returnStr += "\t%s:\t%s\n" % (key, self.__dict__[key])
+
+		return returnStr
+
 class FundElement:
 	def __init__(self, stockCode, stockName, ratio, numberOfShares, valueOfShares):
 		self.StockCode = stockCode
