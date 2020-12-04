@@ -134,12 +134,15 @@ def crawRisk(fundCode, fundName, fundType):
             print(str(e))
     
     if data:
-        soup = BeautifulSoup(data, 'lxml')
+        try:
+            soup = BeautifulSoup(data, 'lxml')
 
-        for td in soup.find_all("td"):
-            if ("基金类型：" in td.text):
-                risk = td.text.split("|")[-1].replace(" ", "")
-                return risk
+            for td in soup.find_all("td"):
+                if ("基金类型：" in td.text):
+                    risk = td.text.split("|")[-1].replace(" ", "")
+                    return risk
+        except:
+            pass
 
     return ""
 
@@ -188,15 +191,18 @@ def crawHistoricalValue(fundCode, fundName, fundType):
             print(str(e))
     
     if data:
-        data = data.split("(")[-1].split(")")[0]
-        data = json.loads(data)
-        for item in data["Data"]["LSJZList"]:
-            date = item["FSRQ"]
-            netAssetValue = item["DWJZ"]
-            accumulativeNetAssetValue = item["LJJZ"]
-            dividends = item["FHSP"]    # TODO: extract the dividends number
-            fundHistoricalValue = FundHistoricalValue(date, netAssetValue, accumulativeNetAssetValue, dividends)
-            print (fundHistoricalValue)
+        try:
+            data = data.split("(")[-1].split(")")[0]
+            data = json.loads(data)
+            for item in data["Data"]["LSJZList"]:
+                date = item["FSRQ"]
+                netAssetValue = item["DWJZ"]
+                accumulativeNetAssetValue = item["LJJZ"]
+                dividends = item["FHSP"]    # TODO: extract the dividends number
+                fundHistoricalValue = FundHistoricalValue(date, netAssetValue, accumulativeNetAssetValue, dividends)
+                print (fundHistoricalValue)
+        except:
+            pass
 
     return ""
 
@@ -213,17 +219,14 @@ def crawlAllFundData():
         fundName = item[2]
         fundType = item[3]
 
-        '''
         fund = crawlPorfolio(fundCode, fundName, fundType)
         print (fund)
         listOfFund.append(fund)
-        '''
 
-        ''''
         risk = crawRisk(fundCode, fundName, fundType)
         if risk:
-            print ("risk = %s" % risk)
-        '''
+            # fundCode = 000013 fundName = 易方达天天理财货币R   risk = 基金类型：货币型
+            print ("fundCode = %s\tfundName = %s\trisk = %s" % (fundCode, fundName, risk))
 
         print (crawHistoricalValue(fundCode, fundName, fundType))
 
