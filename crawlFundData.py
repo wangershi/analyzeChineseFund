@@ -35,6 +35,7 @@ def crawlPorfolio(fundCode):
         try:
             # TODO: use proxy to visit the website
             # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=110011&topline=100&year=&month=&rt=0.9688781140527483
+            # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=000001&topline=10&year=&month=&rt=0.16432760653431278
             website = "http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=%s&topline=100&year=&month=&rt=0.9688781140527483" % fundCode
             req = requests.get(website, timeout=3, headers=header)
 
