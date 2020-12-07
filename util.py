@@ -60,15 +60,16 @@ class FundElement:
 		returnStr = ""
 
 		for key in self.__dict__:
-			returnStr += "\t%s:\t%s\n" % (key, self.__dict__[key])
+			returnStr += ",%s" % self.__dict__[key]
 
-		return returnStr
+		return returnStr + "\n"
 
 class Fund:
-	def __init__(self, code, name, fundType):
+	def __init__(self, code, name, fundType, risk):
 		self.Code = code
 		self.Name = name
 		self.FundType = fundType
+		self.Risk = risk
 		self.Portfolio = []
 
 	def __str__(self):

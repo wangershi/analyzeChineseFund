@@ -8,9 +8,7 @@ from util import user_agent_list, referer_list, Fund, FundElement, parseStringIn
 from getLatestFund import get_fund_code
 from bs4 import BeautifulSoup 
 
-def crawlPorfolio(fundCode, fundName, fundType):
-    fund = Fund(fundCode, fundName, fundType)
-
+def crawlPorfolio(fundCode):
     fundCode = str(fundCode)
     folder = "./data/ccmx"
     if not os.path.exists(folder):
@@ -52,6 +50,7 @@ def crawlPorfolio(fundCode, fundName, fundType):
         except Exception as e:
             print(str(e))
     
+    portfolio = []
     if data:
         # parse the data
         data = data.split("\"")[1]
@@ -86,12 +85,10 @@ def crawlPorfolio(fundCode, fundName, fundType):
 
                 fundElement = FundElement(stockCode, stockName, ratio, numberOfShares, valueOfShares)
 
-                fund.Portfolio.append(fundElement)
-    return fund
+                portfolio.append(fundElement)
+    return portfolio
 
-def crawRisk(fundCode, fundName, fundType):
-    fund = Fund(fundCode, fundName, fundType)
-
+def crawRisk(fundCode):
     fundCode = str(fundCode)
     folder = "./data/risk"
     if not os.path.exists(folder):
@@ -140,15 +137,16 @@ def crawRisk(fundCode, fundName, fundType):
             for td in soup.find_all("td"):
                 if ("基金类型：" in td.text):
                     risk = td.text.split("|")[-1].replace(" ", "")
-                    return risk
+
+                    # filter some funds without risk level, such as http://fund.eastmoney.com/000013.html
+                    if "风险" in risk:
+                        return risk
         except:
             pass
 
     return ""
 
-def crawHistoricalValue(fundCode, fundName, fundType):
-    fund = Fund(fundCode, fundName, fundType)
-
+def crawHistoricalValue(fundCode):
     fundCode = str(fundCode)
     folder = "./data/historicalValue"
     if not os.path.exists(folder):
@@ -207,28 +205,65 @@ def crawHistoricalValue(fundCode, fundName, fundType):
     return ""
 
 def crawlAllFundData():
+    # get the list of fund code
     fund_code_list = get_fund_code()
 
-    listOfFund = []
+    # save the portfolio and historical value
+    folderOfPortfolio = "./data/portfolio"
+    if not os.path.exists(folderOfPortfolio):
+        os.mkdir(folderOfPortfolio)
+
+    # get header of portfolio
+    headerOfPortfolio = ""
+    tempFund = Fund("", "", "", "")
+    for key in tempFund.__dict__:
+        if key != "Portfolio" and key != "Code":
+            headerOfPortfolio += "%s," % key
+    tempFundElement = FundElement("", "", "", "", "")
+    for key in tempFundElement.__dict__:
+        headerOfPortfolio += "%s," % key
+    headerOfPortfolio = headerOfPortfolio[:-1] + "\n"
+    #print (headerOfPortfolio)  # Name,FundType,Risk,StockCode,StockName,Ratio,NumberOfShares,ValueOfShares
+    
+    count = 0
     for item in fund_code_list:
         # test in one fund
-        if item[0] != "110011":
-            continue
+        #if item[0] != "110011":
+        #    continue
+        #if count >= 1000:
+        #    break
 
         fundCode = item[0]
         fundName = item[2]
         fundType = item[3]
 
-        fund = crawlPorfolio(fundCode, fundName, fundType)
-        print (fund)
-        listOfFund.append(fund)
-
-        risk = crawRisk(fundCode, fundName, fundType)
-        if risk:
+        # crawl risk and fund
+        portfolio = crawlPorfolio(fundCode)
+        risk = crawRisk(fundCode)
+        if len(portfolio) and risk:
             # fundCode = 000013 fundName = 易方达天天理财货币R   risk = 基金类型：货币型
-            print ("fundCode = %s\tfundName = %s\trisk = %s" % (fundCode, fundName, risk))
+            #print ("count = %s\tfundCode = %s\tfundName = %s\trisk = %s" % (count, fundCode, fundName, risk))
 
-        print (crawHistoricalValue(fundCode, fundName, fundType))
+            fund = Fund(fundCode, fundName, fundType, risk)
+            fund.Portfolio = portfolio
+            print ("%s\t%s\t%s" % (count, fund.Code, fund.Name))
+
+            # write it to file
+            nameOfPortfolio = "%s_%s.csv" % (fundCode, datetime.datetime.now().strftime("%Y%m"))
+            pathOfPortfolio = os.path.join(folderOfPortfolio, nameOfPortfolio)
+            # save the data into file
+            with open(pathOfPortfolio, "w") as fw:
+                fw.write(headerOfPortfolio)
+                headerOfStrToWrite = "%s,%s,%s" % (fund.Name, fund.FundType, fund.Risk)
+                for fundElement in fund.Portfolio:
+                    strToWrite = ""
+                    strToWrite += headerOfStrToWrite
+                    strToWrite += str(fundElement)
+                    fw.write(strToWrite)
+            
+            count += 1
+
+        #print (crawHistoricalValue(fundCode))
 
 if __name__ == "__main__":
     crawlAllFundData()
