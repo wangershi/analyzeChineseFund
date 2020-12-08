@@ -205,6 +205,73 @@ def crawHistoricalValue(fundCode):
 
     return ""
 
+def crawlAssetsAllocation(fundCode):
+    fundCode = str(fundCode)
+    folder = "./data/assetsAllocation"
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    # update every month, not every day
+    nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime("%Y%m"))
+    pathOfPage = os.path.join(folder, nameOfPage)
+    data = ""
+
+    # if the page exists on local file, then read it directly
+    if os.path.exists(pathOfPage):
+        # save the data into file
+        with open(pathOfPage, "r") as fr:
+            data = fr.read()
+    else:
+        # 获取一个随机user_agent和Referer
+        header = {'User-Agent': random.choice(user_agent_list),
+            'Referer': random.choice(referer_list)
+        }
+
+        # 使用try、except来捕获异常
+        # 如果不捕获异常，程序可能崩溃
+        try:
+            # TODO: use proxy to visit the website
+            # http://fundf10.eastmoney.com/zcpz_110011.html
+            website = "http://fundf10.eastmoney.com/zcpz_%s.html" % fundCode
+            req = requests.get(website, timeout=3, headers=header)
+
+            # sleep for some time
+            time.sleep(random.randint(3, 6))
+
+            req.encoding = 'utf-8'
+            data = req.text
+
+            # save the data into file
+            with open(pathOfPage, "w") as fw:
+                fw.write(data)
+        except Exception as e:
+            print(str(e))
+
+    if data:
+        try:
+            soup = BeautifulSoup(data, 'lxml')
+
+            for table in soup.find_all("table"):
+                if ("报告期" in table.text):
+                    for tbody in table:
+                        if tbody.name == "tbody":
+                            for tr in tbody:
+                                td = tr.findChildren('td')
+
+                                if (len(td) == 5):
+                                    date = td[0].text
+                                    stockPortion = parseStringIntoNumber(td[1].text)
+                                    bondPortion = parseStringIntoNumber(td[2].text)
+                                    cashPortion = parseStringIntoNumber(td[3].text)
+                                    print ("fundCode = %s\tstockPortion = %s\tbondPortion = %s\tcashPortion = %s" % (fundCode, stockPortion, bondPortion, cashPortion))
+
+                                # TODO: get more allocation before))
+                                break
+        except:
+            pass
+
+    return ""
+
 def crawlAllFundData():
     # get the list of fund code
     fund_code_list = get_fund_code()
@@ -238,6 +305,7 @@ def crawlAllFundData():
         fundName = item[2]
         fundType = item[3]
 
+        '''
         # crawl risk and fund
         portfolio = crawlPorfolio(fundCode)
         risk = crawRisk(fundCode)
@@ -265,6 +333,10 @@ def crawlAllFundData():
             count += 1
 
         #print (crawHistoricalValue(fundCode))
+        '''
+
+        crawlAssetsAllocation(fundCode)
+        count += 1
 
 if __name__ == "__main__":
     crawlAllFundData()
