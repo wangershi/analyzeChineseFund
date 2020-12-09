@@ -44,14 +44,15 @@ class FundHistoricalValue:
 		returnStr = ""
 
 		for key in self.__dict__:
-			returnStr += "\t%s:\t%s\n" % (key, self.__dict__[key])
+			returnStr += "%s," % self.__dict__[key]
 
-		return returnStr
+		return returnStr[:-1] + "\n"
 
 class FundElement:
-	def __init__(self, stockCode, stockName, ratio, numberOfShares, valueOfShares):
-		self.StockCode = stockCode
-		self.StockName = stockName
+	def __init__(self, elementType, code, name, ratio, numberOfShares, valueOfShares):
+		self.ElementType = elementType
+		self.Code = code
+		self.Name = name
 		self.Ratio = ratio
 		self.NumberOfShares = numberOfShares
 		self.ValueOfShares = valueOfShares
@@ -60,27 +61,21 @@ class FundElement:
 		returnStr = ""
 
 		for key in self.__dict__:
-			returnStr += ",%s" % self.__dict__[key]
+			returnStr += "%s," % self.__dict__[key]
 
-		return returnStr + "\n"
+		return returnStr[:-1] + "\n"
 
-class Fund:
+class FundInformation:
 	def __init__(self, code, name, fundType, risk):
 		self.Code = code
 		self.Name = name
 		self.FundType = fundType
 		self.Risk = risk
-		self.Portfolio = []
 
 	def __str__(self):
 		returnStr = ""
 
 		for key in self.__dict__:
-			if key != "Portfolio":
-				returnStr += "%s:\t%s\n" % (key, self.__dict__[key])
-			else:
-				returnStr += "%s:\n" % key
-				for item in self.__dict__[key]:
-					returnStr += "%s\n" % item
+			returnStr += "%s," % self.__dict__[key]
 
-		return returnStr
+		return returnStr[:-1] + "\n"
