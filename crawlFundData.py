@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 def crawlStock(fundCode):
     fundCode = str(fundCode)
-    folder = "./data/ccmx"
+    folder = "./data/originalCcmx"
     if not os.path.exists(folder):
         os.mkdir(folder)
 
@@ -94,7 +94,7 @@ def crawlStock(fundCode):
 
 def crawRisk(fundCode):
     fundCode = str(fundCode)
-    folder = "./data/risk"
+    folder = "./data/originalRisk"
     if not os.path.exists(folder):
         os.mkdir(folder)
 
@@ -225,7 +225,7 @@ def crawHistoricalValue(fundCode):
 
 def crawlAssetsAllocation(fundCode):
     fundCode = str(fundCode)
-    folder = "./data/assetsAllocation"
+    folder = "./data/originalAssetsAllocation"
     if not os.path.exists(folder):
         os.mkdir(folder)
 
