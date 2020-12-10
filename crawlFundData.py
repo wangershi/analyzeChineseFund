@@ -195,7 +195,8 @@ def crawHistoricalValue(fundCode):
     folderToSave = "./data/historicalValue"
     if not os.path.exists(folderToSave):
         os.mkdir(folderToSave)
-    pathOfHistoricalValue = os.path.join(folderToSave, nameOfPage)
+    nameOfCsvPage = "%s_%s.csv" % (fundCode, datetime.datetime.now().strftime("%Y%m"))
+    pathOfHistoricalValue = os.path.join(folderToSave, nameOfCsvPage)
     listOfFundHistoricalValue = []
     if data:
         try:
@@ -205,11 +206,19 @@ def crawHistoricalValue(fundCode):
                 date = item["FSRQ"]
                 netAssetValue = item["DWJZ"]
                 accumulativeNetAssetValue = item["LJJZ"]
+                # diff between netAssetValue and accumulativeNetAssetValue can't be too large
+                # Example: http://fundf10.eastmoney.com/jjjz_010288.html
+                # TODO: get the data from http://fundf10.eastmoney.com/jjjz_010288.html
+                if (float(accumulativeNetAssetValue)/float(netAssetValue) > 2.0) or (float(accumulativeNetAssetValue)/float(netAssetValue) < 0.5):
+                    listOfFundHistoricalValue.clear()
+                    print ("netAssetValue = %s" % netAssetValue)
+                    print ("accumulativeNetAssetValue = %s" % accumulativeNetAssetValue)
+                    raise
                 dividends = item["FHSP"]    # TODO: extract the dividends number
                 fundHistoricalValue = FundHistoricalValue(date, netAssetValue, accumulativeNetAssetValue, dividends)
                 listOfFundHistoricalValue.append(fundHistoricalValue)
-        except:
-            pass
+        except Exception as e:
+            print (e)
 
     if len(listOfFundHistoricalValue):
         headerOfFundHistoricalValue = ""
@@ -424,13 +433,12 @@ def crawlAllFundData():
                 print ("%s\t%s\t%s" % (count, fundCode, fundName))
 
                 risk = crawRisk(fundCode)
-                if risk:
-                    fundInformation = FundInformation(fundCode, fundName, fundType, risk)
-                    fw.write(str(fundInformation))
-                    count += 1
+                fundInformation = FundInformation(fundCode, fundName, fundType, risk)
+                fw.write(str(fundInformation))
+                count += 1
 
     ''' write porfolio of fund '''
-    if True:
+    if False:
         count = 0
         for item in fund_code_list:
             #if item[0] != "110011":
@@ -465,10 +473,11 @@ def crawlAllFundData():
                 count += 1
 
     ''' write historical value of fund '''
-    if False:
+    if True:
         count = 0
         for item in fund_code_list:
             #if item[0] != "110011":
+            #if item[0] != "010288":
             #    continue
             #if count >= 10:
             #    break

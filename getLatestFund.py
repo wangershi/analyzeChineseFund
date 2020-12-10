@@ -16,7 +16,7 @@ def get_fund_code(forceCrawl=False):
         Args:
             forceCrawl: force crawl all funds
     '''
-    pathToday = "data/fund_code_%s.csv" % datetime.datetime.now().strftime("%Y%m%d")
+    pathToday = "data/latestFundCode/fund_code_%s.csv" % datetime.datetime.now().strftime("%Y%m%d")
     if (not os.path.exists(pathToday) or forceCrawl):
         # 获取一个随机user_agent和Referer
         header = {'User-Agent': random.choice(user_agent_list),
