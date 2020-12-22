@@ -202,18 +202,16 @@ def crawHistoricalValue(fundCode):
         try:
             data = data.split("(")[-1].split(")")[0]
             data = json.loads(data)
+
+            # Don't show the net value
+            # Example: http://fundf10.eastmoney.com/jjjz_010288.html
+            if (data["Data"]["SYType"]) == "每万份收益":
+                raise Exception("The fund contains 每万份收益")
+
             for item in data["Data"]["LSJZList"]:
                 date = item["FSRQ"]
                 netAssetValue = item["DWJZ"]
                 accumulativeNetAssetValue = item["LJJZ"]
-                # diff between netAssetValue and accumulativeNetAssetValue can't be too large
-                # Example: http://fundf10.eastmoney.com/jjjz_010288.html
-                # TODO: get the data from http://fundf10.eastmoney.com/jjjz_010288.html
-                if (float(accumulativeNetAssetValue)/float(netAssetValue) > 2.0) or (float(accumulativeNetAssetValue)/float(netAssetValue) < 0.5):
-                    listOfFundHistoricalValue.clear()
-                    print ("netAssetValue = %s" % netAssetValue)
-                    print ("accumulativeNetAssetValue = %s" % accumulativeNetAssetValue)
-                    raise
                 dividends = item["FHSP"]    # TODO: extract the dividends number
                 fundHistoricalValue = FundHistoricalValue(date, netAssetValue, accumulativeNetAssetValue, dividends)
                 listOfFundHistoricalValue.append(fundHistoricalValue)
@@ -231,6 +229,53 @@ def crawHistoricalValue(fundCode):
             fw.write(headerOfFundHistoricalValue)
             for fundHistoricalValue in listOfFundHistoricalValue:
                 fw.write(str(fundHistoricalValue))
+
+def crawHistoricalName(fundCode):
+    fundCode = str(fundCode)
+    folder = "./data/originalHistoricalName"
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    # update every month, not every day
+    nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime("%Y%m"))
+    pathOfPage = os.path.join(folder, nameOfPage)
+    data = ""
+
+    # if the page exists on local file, then read it directly
+    if os.path.exists(pathOfPage):
+        # save the data into file
+        with open(pathOfPage, "r") as fr:
+            data = fr.read()
+    else:
+        # 获取一个随机user_agent和Referer
+        header = {'User-Agent': random.choice(user_agent_list),
+            'Referer': random.choice(referer_list)
+        }
+
+        # 使用try、except来捕获异常
+        # 如果不捕获异常，程序可能崩溃
+        try:
+            # TODO: use proxy to visit the website
+            # http://fundf10.eastmoney.com/jjjz_180003.html
+            website = "http://fundf10.eastmoney.com/jjjz_%s.html" % fundCode
+            req = requests.get(website, timeout=3, headers=header)
+
+            # sleep for some time
+            time.sleep(random.randint(3, 6))
+
+            req.encoding = 'utf-8'
+            data = req.text
+
+            # save the data into file
+            with open(pathOfPage, "w") as fw:
+                fw.write(data)
+        except Exception as e:
+            print(str(e))
+    
+    if data:
+        if ("单位净值" in data) and ("累计净值" in data):
+            return True
+    return False
 
 def crawlAssetsAllocation(fundCode):
     fundCode = str(fundCode)
@@ -414,7 +459,7 @@ def crawlAllFundData():
     #print (headerOfFundElement) # ElementType,Code,Name,Ratio,NumberOfShares,ValueOfShares
     
     ''' write basic information of fund '''
-    if False:
+    if True:
         nameOfFundInformation = "fundInformation_%s.csv" % (datetime.datetime.now().strftime("%Y%m"))
         pathOfFundInformation = os.path.join(folderOfFundInformation, nameOfFundInformation)
         with open(pathOfFundInformation, "w") as fw:
@@ -473,11 +518,12 @@ def crawlAllFundData():
                 count += 1
 
     ''' write historical value of fund '''
-    if True:
+    if False:
         count = 0
         for item in fund_code_list:
             #if item[0] != "110011":
             #if item[0] != "010288":
+            #if item[0] != "180003":
             #    continue
             #if count >= 10:
             #    break
@@ -487,6 +533,9 @@ def crawlAllFundData():
             fundType = item[3]
 
             print ("%s\t%s\t%s" % (count, fundCode, fundName))
+
+            #if not crawHistoricalName(fundCode):
+            #    continue
 
             crawHistoricalValue(fundCode)
 
