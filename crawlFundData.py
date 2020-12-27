@@ -205,8 +205,9 @@ def crawHistoricalValue(fundCode):
 
             # Don't show the net value
             # Example: http://fundf10.eastmoney.com/jjjz_010288.html
-            if (data["Data"]["SYType"]) == "每万份收益":
-                raise Exception("The fund contains 每万份收益")
+            SYType = data["Data"]["SYType"]
+            if (SYType == "每万份收益") or (SYType == "每百份收益") or (SYType == "每百万份收益"):
+                raise Exception("The fund contains 每*份收益")
 
             for item in data["Data"]["LSJZList"]:
                 date = item["FSRQ"]
@@ -459,7 +460,7 @@ def crawlAllFundData():
     #print (headerOfFundElement) # ElementType,Code,Name,Ratio,NumberOfShares,ValueOfShares
     
     ''' write basic information of fund '''
-    if True:
+    if False:
         nameOfFundInformation = "fundInformation_%s.csv" % (datetime.datetime.now().strftime("%Y%m"))
         pathOfFundInformation = os.path.join(folderOfFundInformation, nameOfFundInformation)
         with open(pathOfFundInformation, "w") as fw:
@@ -518,12 +519,14 @@ def crawlAllFundData():
                 count += 1
 
     ''' write historical value of fund '''
-    if False:
+    if True:
         count = 0
         for item in fund_code_list:
             #if item[0] != "110011":
             #if item[0] != "010288":
             #if item[0] != "180003":
+            #if item[0] != "511620":
+            #if item[0] != "519809":
             #    continue
             #if count >= 10:
             #    break
