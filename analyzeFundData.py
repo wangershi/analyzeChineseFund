@@ -210,7 +210,116 @@ def analyzeHistoricalValue():
     plt.savefig("./data/%s.png" % nameOfPicture)
     print ("END.")
 
+def getHistoricalValue():
+    print ("Begin to get historical value...")
+
+    # we should ignore some strange funds
+    ignorelist = []
+    for line in  open("./data/ignorelist.txt", "r"):
+        ignorelist.append(line.split("\n")[0])
+    #print ("ignorelist = %s" % ignorelist)  # ['009317', '009763']
+
+    # read fund information
+    dfForFundInformation = pd.read_csv("./data/fundInformation/fundInformation_202012.csv", dtype=object)
+
+    # days range to analyze, 252 is the trading days in one year
+    daysRangeInOneYear = 252
+    daysRangeToAnalyze = daysRangeInOneYear * 3
+    minDaysRange = 60
+
+    rootFolder = "./data/historicalValue"
+
+    # use fund "000001" be the standard of trading day
+    pathOfFileStandard = os.path.join(rootFolder, "000934_202012.csv")
+    dfStandard = pd.read_csv(pathOfFileStandard)
+    dfStandard['Date'] = pd.to_datetime(dfStandard['Date'])
+    dfStandard = dfStandard.head(daysRangeToAnalyze)
+    dateStandard = dfStandard["Date"]
+    firstDay = dateStandard[dateStandard.first_valid_index()]
+    lastDay = dateStandard[dateStandard.last_valid_index()]
+    #print (lastDay) # 2017-11-02 00:00:00
+
+    # save data in this folder
+    folderToSave = "data/dayInStandard/"
+    if not os.path.exists(folderToSave):
+        os.mkdir(folderToSave)
+
+    count = 0
+    for file in os.listdir(rootFolder):
+        #if file != "110011_202012.csv":
+        #    continue
+        fundCode = file.split("_")[0]
+
+        # exclude some funds
+        if fundCode in ignorelist:
+            continue
+
+        if count >= 1000000:
+            break
+        print ("\ncount = %s\tfundCode = %s" % (count, fundCode))  # 180003
+        currentFund = dfForFundInformation[dfForFundInformation["Code"] == fundCode]
+        fundName = currentFund.iloc[0]["Name"]
+        print ("fundName = %s" % fundName)  # 银华-道琼斯88指数A
+        try:
+            pathOfFile = os.path.join(rootFolder, file)
+            df = pd.read_csv(pathOfFile)
+
+            # remove empty line
+            df = df.dropna(axis=0, subset=['AccumulativeNetAssetValue'])
+
+            # like http://fundf10.eastmoney.com/jjjz_010476.html, the return in 30 days is 26%, so the annualized return is too high
+            if df.shape[0] <= minDaysRange:
+                continue
+
+            # get growth ratio for AccumulativeNetAssetValue
+            df["PreviousValue"] = df["AccumulativeNetAssetValue"].shift(-1)
+            df["GrowthRatio"] = (df["AccumulativeNetAssetValue"] - df["PreviousValue"]) / df["PreviousValue"]
+            
+            # TODO: use adjust factor to do this
+            # TODO: maybe we can use 日增长率 to adjust it
+            # abandom those values before the date when GrowthRatio is too large (abs >= 1.0)
+            df["AbsoluteGrowthRatio"] = df["GrowthRatio"].abs()
+            #print (df[df["AbsoluteGrowthRatio"] > 1].first_valid_index())   # 346
+            if df[df["AbsoluteGrowthRatio"] > 1].shape[0] > 0:
+                df = df.loc[0:df[df["AbsoluteGrowthRatio"] > 1].first_valid_index() - 1]
+            #print (df.tail(40))
+
+            # reset the index
+            df = df.dropna(axis=0, subset=['GrowthRatio'])
+            df.reset_index(drop=True, inplace=True)
+
+            # only choose much days
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df[df["Date"] <= firstDay]
+            df = df[df["Date"] >= lastDay]
+
+            # too less data
+            if df.shape[0] <= minDaysRange:
+                continue
+
+            #df['DayInStandard'] = df['Date']
+            listOfDayInStandard = []
+            for index, row in df.iterrows():
+                try:
+                    indexOfDayInStandard = dfStandard[dfStandard['Date'] == df.loc[index]['Date']].index
+                    listOfDayInStandard.append(indexOfDayInStandard._data[0])
+                # cannot find this day in standardFund
+                except:
+                    listOfDayInStandard.append(-1)
+            df.insert(0, 'DayInStandard', listOfDayInStandard)
+
+            # save data
+            pathToSave = os.path.join(folderToSave, file)
+            df.to_csv(pathToSave)
+
+            count += 1
+        except Exception as e:
+            raise e
+
+    print ("END.")
+
 if __name__ == "__main__":
     #analyzeRisk()
     #analyzePortfolio()
-    analyzeHistoricalValue()
+    #analyzeHistoricalValue()
+    getHistoricalValue()
