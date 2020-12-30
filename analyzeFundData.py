@@ -35,10 +35,10 @@ def analyzeHistoricalValue():
     print ("Begin to analyze historical value...")
 
     # days range of some funds are less than daysRangeToAnalyze
-    ifAddAdjustedFund = True
+    ifAddAdjustedFund = False
 
     # read watchlist
-    ifUseWatchList = True
+    ifUseWatchList = False
     watchlist = []
     for line in  open("./data/watchlist.txt", "r"):
         watchlist.append(line.split("\n")[0])
@@ -186,7 +186,7 @@ def analyzeHistoricalValue():
             raise e
 
     if not ifUseWatchList:
-        plt.figure(figsize=(90, 90))
+        plt.figure(figsize=(10, 10))
     plt.scatter(riskList, returnList)
     plt.xlabel("Annualized Risk")
     plt.ylabel("Annualized Return")
@@ -321,5 +321,5 @@ def getHistoricalValue():
 if __name__ == "__main__":
     #analyzeRisk()
     #analyzePortfolio()
-    #analyzeHistoricalValue()
-    getHistoricalValue()
+    analyzeHistoricalValue()
+    #getHistoricalValue()
