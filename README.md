@@ -7,6 +7,12 @@ git clone https://github.com/wangershi/analyzeChineseFund.git
 
 ## how to compare all funds in same range
 I want to get the return and risk in 3 years for all funds.
+
+You can get it by following commands.
+```
+python analyzeFundData.py analyzeHistoricalValue
+```
+
 The return is annualized and the risk is the variance of return in every day.
 So I get the return and risk for all funds as below.
 

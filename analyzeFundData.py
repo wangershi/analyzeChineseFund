@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import math
+import fire
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
@@ -38,7 +39,7 @@ def analyzeHistoricalValue():
     ifAddAdjustedFund = False
 
     # read watchlist
-    ifUseWatchList = False
+    ifUseWatchList = True
     watchlist = []
     for line in  open("./data/watchlist.txt", "r"):
         watchlist.append(line.split("\n")[0])
@@ -321,5 +322,6 @@ def getHistoricalValue():
 if __name__ == "__main__":
     #analyzeRisk()
     #analyzePortfolio()
-    analyzeHistoricalValue()
+    #analyzeHistoricalValue()
     #getHistoricalValue()
+    fire.Fire()
