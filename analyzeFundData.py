@@ -319,9 +319,18 @@ def getHistoricalValue():
 
     print ("END.")
 
+def getAverageSlopeForFundsInSameRange():
+    '''
+        in return-risk figure, the return is proportional to risk in most cases,
+        so we can use slope(return/risk) as the feature of this fund, if we want
+        to summarize funds in same range, we can use average slope to represent it.
+    '''
+
 if __name__ == "__main__":
-    #analyzeRisk()
-    #analyzePortfolio()
-    #analyzeHistoricalValue()
-    #getHistoricalValue()
+    '''
+        analyzeRisk
+        analyzePortfolio
+        analyzeHistoricalValue
+        getHistoricalValue
+    '''
     fire.Fire()

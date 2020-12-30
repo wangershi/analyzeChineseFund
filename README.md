@@ -5,7 +5,7 @@ The fund is the portfolio of stocks and other assets, we can analyze the relatio
 git clone https://github.com/wangershi/analyzeChineseFund.git
 ```
 
-## how to compare all funds in same range
+## compare all funds in same range is not a easy job
 I want to get the return and risk in 3 years for all funds.
 
 You can get it by following commands.
@@ -25,3 +25,5 @@ So when we exclude those funds less than 3 years, the maximum annualized return 
 ![risk_return_noWatchlist_notAddAdjustedFund](image/risk_return_noWatchlist_notAddAdjustedFund.png)
 
 But it's not smart to exclude those funds simply, in those days I will find a way to adjust the return and risk of those funds so we can compare all funds in same range.
+
+## quantitively analyze
