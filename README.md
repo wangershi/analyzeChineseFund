@@ -34,5 +34,7 @@ For example, since fund "007994" founded in Mar 25th, 2020, the founding days wi
 python analyzeFundData.py getAverageSlopeForFundsInSameRange
 ```
 We can get the average of annualized return.
+
 ![average return](image/averageReturn_30.png)
+
 It's easy to find some interesting points in this chart, the average return is not same in different days, and the highest is the funds founding in ~150 days, almost the day after pandamic in China (Although it seems the pandemic won't disappear in 2021, but the market think China recoverd from pandemic in March 2020 and it had been controlled), in that time the market recovered from the pandemic and almost every fund earns a lot after that.
