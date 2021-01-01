@@ -5,7 +5,7 @@ The fund is the portfolio of stocks and other assets, we can analyze the relatio
 git clone https://github.com/wangershi/analyzeChineseFund.git
 ```
 
-## compare all funds in same range is not a easy job
+## compare all funds in same time range is not a easy job
 I want to get the return and risk in 3 years for all funds.
 
 You can get it by following commands.
@@ -44,5 +44,18 @@ But this will bother us when we want to choose some funds when we want to buy, i
 So in next section I will find a way to elimate the influence of foundation date and flatten the average return.
 
 ## flatten average return
+As the purpose is to compare all funds in same time range, it's a good way to estimate the return in 3 years for those funds founding less than 3 years.
 
+So the question is, how can we estimate?
 
+For a fund, we count the net value by count its portfolio (deposit, bond and some stocks). But there are two difficulties to get the porfolio in all days.
+ - The fund managers publish the statements regularly, e.g., three months. We can't get the fortfolio between the publishing date
+ - The fortfolio in the publishing date is different with the fortfolio in statements, but we don't konw the exact date
+
+So it's hard to use the portfolio in all statements, and to simple our model, we assume the portfolio keep unchanged.
+
+It may be easier to get the historical price of all elements in portfolio, but there are another question, the portfolio is not a full list (Refer to a [Chinese blog](https://zhuanlan.zhihu.com/p/314235923) I wrote). In some funds, about 10% assets is unkonwn, so it's a question how we count it.
+
+As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is all managers tend to use same strategies to manage the fund, for example, for example, if the portfolio of two funds by different managers are related to clean energy, they tend to buy same stocks in almost same ratio, so I can estimate the newer fund by older fund.
+
+I analyze the covariance matrix for all funds and try to find the maximum covariance for each fund, it seems all the maximum covariance is near 1, so we can find a similar fund for every fund.
