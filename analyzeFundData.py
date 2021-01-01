@@ -173,7 +173,7 @@ def analyzeHistoricalValue():
 
             # use latest value to reflect the true percentage gain
             # this is worthful if the fund rise rapidly recently but have no change in long previous days
-            returnCurrent = (lastestNetValue-earliestNetValue)/earliestNetValue/countNetValue*252
+            returnCurrent = (lastestNetValue-earliestNetValue)/earliestNetValue/countNetValue*daysRangeInOneYear
             riskList.append(riskCurrent)
             returnList.append(returnCurrent)
 
@@ -325,6 +325,139 @@ def getAverageSlopeForFundsInSameRange():
         so we can use slope(return/risk) as the feature of this fund, if we want
         to summarize funds in same range, we can use average slope to represent it.
     '''
+    print ("Begin to get average slope for funds in same range...")
+
+    # days range to analyze, 252 is the trading days in one year
+    daysRangeInOneYear = 252
+
+    divideNumber = 30
+
+    rootFolder = "./data/dayInStandard"
+
+    dictOfSlopeInCountNetValue = {}
+    dictOfReturnInCountNetValue = {}
+    dictOfRiskInCountNetValue = {}
+
+    count = 0
+    for file in os.listdir(rootFolder):
+        if file != "007994_202012.csv":
+            continue
+        fundCode = file.split("_")[0]
+
+        if count >= 100000:
+            break
+        print ("\ncount = %s\tfundCode = %s" % (count, fundCode))  # 180003
+
+        try:
+            pathOfFile = os.path.join(rootFolder, file)
+            df = pd.read_csv(pathOfFile)
+            #print (df)
+
+            netValue = df["AccumulativeNetAssetValue"]
+            #print ("netValue = %s" % netValue)
+            earliestNetValue = netValue[netValue.last_valid_index()]
+            lastestNetValue = netValue[netValue.first_valid_index()]
+            #print ("earliestNetValue = %s" % earliestNetValue)  # 3.004
+
+            dayInStandard = df["DayInStandard"]
+            firstDayInStandard = dayInStandard[dayInStandard.first_valid_index()]
+            lastDayInStandard = dayInStandard[dayInStandard.last_valid_index()]
+            countNetValue = lastDayInStandard - firstDayInStandard + 1
+            print ("countNetValue = %s" % countNetValue)   # 756
+
+            # TODO: standardrize the risk in one year
+            # assume the value is a list like (0, 1, 0, 1,...), growth ratio is a list like (1, -1, 1, -1,...)
+            # set ddof be 0 to standardrize the risk by n, not (n - 1), then the std is 1, not related to countNetValue
+            riskCurrent = df["GrowthRatio"].std(ddof=0)
+            #print ("riskCurrent = %s" % riskCurrent)   # 0.014161537768387899
+
+            # use latest value to reflect the true percentage gain
+            # this is worthful if the fund rise rapidly recently but have no change in long previous days
+            returnCurrent = (lastestNetValue-earliestNetValue)/earliestNetValue/countNetValue*daysRangeInOneYear
+            #print ("returnCurrent = %s" % returnCurrent)   # 0.3984541490442937
+
+            slope = returnCurrent / riskCurrent
+            print ("slope = %s" % slope)   # 28.136361711631576
+
+            raise
+
+            # TODO: exclude 005337
+            if math.isnan(slope):
+                continue
+
+            # count them in period, not a single day
+            approximateCountValue = countNetValue // divideNumber * divideNumber
+
+            if approximateCountValue not in dictOfSlopeInCountNetValue.keys():
+                dictOfSlopeInCountNetValue[approximateCountValue] = []
+            dictOfSlopeInCountNetValue[approximateCountValue].append(slope)
+
+            if approximateCountValue not in dictOfReturnInCountNetValue.keys():
+                dictOfReturnInCountNetValue[approximateCountValue] = []
+            dictOfReturnInCountNetValue[approximateCountValue].append(returnCurrent)
+
+            if approximateCountValue not in dictOfRiskInCountNetValue.keys():
+                dictOfRiskInCountNetValue[approximateCountValue] = []
+            dictOfRiskInCountNetValue[approximateCountValue].append(riskCurrent)
+
+            count += 1
+        except Exception as e:
+            raise e
+
+    print (dictOfSlopeInCountNetValue)
+    plt.xlabel("count of NetValue")
+    plt.ylabel("average slope for return/risk")
+    for key in dictOfSlopeInCountNetValue.keys():
+        # Number of observations
+        n = len(dictOfSlopeInCountNetValue[key])
+        # Mean of the data
+        mean = sum(dictOfSlopeInCountNetValue[key]) / n
+        # Square deviations
+        deviations = [(x - mean) ** 2 for x in dictOfSlopeInCountNetValue[key]]
+        # standard deviation
+        standardDeviation = math.sqrt(sum(deviations) / n)
+
+        plt.errorbar(key, mean, standardDeviation, c='k', marker='+')
+
+    plt.savefig("./data/averageSlopeForReturnRisk_%s.png" % divideNumber)
+
+    print (dictOfReturnInCountNetValue)
+    plt.clf()
+    plt.xlabel("count of NetValue")
+    plt.ylabel("return")
+    for key in dictOfReturnInCountNetValue.keys():
+        # Number of observations
+        n = len(dictOfReturnInCountNetValue[key])
+        # Mean of the data
+        mean = sum(dictOfReturnInCountNetValue[key]) / n
+        # Square deviations
+        deviations = [(x - mean) ** 2 for x in dictOfReturnInCountNetValue[key]]
+        # standard deviation
+        standardDeviation = math.sqrt(sum(deviations) / n)
+
+        plt.errorbar(key, mean, standardDeviation, c='k', marker='+')
+
+    plt.savefig("./data/averageReturn_%s.png" % divideNumber)
+
+    print (dictOfRiskInCountNetValue)
+    plt.clf()
+    plt.xlabel("count of NetValue")
+    plt.ylabel("risk")
+    for key in dictOfRiskInCountNetValue.keys():
+        # Number of observations
+        n = len(dictOfRiskInCountNetValue[key])
+        # Mean of the data
+        mean = sum(dictOfRiskInCountNetValue[key]) / n
+        # Square deviations
+        deviations = [(x - mean) ** 2 for x in dictOfRiskInCountNetValue[key]]
+        # standard deviation
+        standardDeviation = math.sqrt(sum(deviations) / n)
+
+        plt.errorbar(key, mean, standardDeviation, c='k', marker='+')
+
+    plt.savefig("./data/averageRisk_%s.png" % divideNumber)
+
+    print ("END.")
 
 if __name__ == "__main__":
     '''
