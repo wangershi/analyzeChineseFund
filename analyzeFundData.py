@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import math
 import fire
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
@@ -459,11 +460,79 @@ def getAverageSlopeForFundsInSameRange():
 
     print ("END.")
 
+def getCovarianceMatrixForAllFunds():
+    print ("Begin to get covariance matrix for all funds...")
+
+    rootFolder = "./data/dayInStandard"
+
+    listOfFunds = []
+
+    for file in os.listdir(rootFolder):
+        fundCode = file.split("_")[0]
+        listOfFunds.append(fundCode)
+    #print (listOfFunds)
+
+    #listOfFunds = listOfFunds[:1000]
+
+    '''
+    # get covariance
+    # as the trading days is diff between funds, we have to count it singly
+    covarainceMatrix = {}
+    for i in range(len(listOfFunds)):
+        print ("[%s]For fund %s:" % (i, listOfFunds[i]))
+
+        for j in range(i+1, len(listOfFunds)):
+            fundA = listOfFunds[i]
+            fundB = listOfFunds[j]
+
+            if fundA not in ["110011", "180003"] or fundB not in ["110011", "180003"]:
+                continue
+
+            #print ("%s vs %s" % (fundA, fundB))
+
+            pathA = os.path.join(rootFolder, "%s_202012.csv" % fundA)
+            dfA = pd.read_csv(pathA)
+            dfA = dfA[["DayInStandard", "AccumulativeNetAssetValue"]]
+            #print (dfA)
+
+            pathB = os.path.join(rootFolder, "%s_202012.csv" % fundB)
+            dfB = pd.read_csv(pathB)
+            dfB = dfB[["DayInStandard", "AccumulativeNetAssetValue"]]
+            #print (dfB)
+
+            dfMerge = pd.merge(dfA,dfB,on=['DayInStandard'])
+            dfMerge = dfMerge[["AccumulativeNetAssetValue_x", "AccumulativeNetAssetValue_y"]]
+            covariance = dfMerge.cov(ddof=0)
+            print (covariance)
+            covarianceXY = covariance["AccumulativeNetAssetValue_x"]["AccumulativeNetAssetValue_y"]
+            covarianceXX = covariance["AccumulativeNetAssetValue_x"]["AccumulativeNetAssetValue_x"]
+            covarianceYY = covariance["AccumulativeNetAssetValue_y"]["AccumulativeNetAssetValue_y"]
+            #print (type(covarianceXY))  # <class 'numpy.float64'>
+            standardCoVariance = covarianceXY / math.sqrt(covarianceXX * covarianceYY)
+
+            if fundA not in covarainceMatrix:
+                covarainceMatrix[fundA] = {}
+            covarainceMatrix[fundA][fundB] = standardCoVariance
+
+            if fundB not in covarainceMatrix:
+                covarainceMatrix[fundB] = {}
+            covarainceMatrix[fundB][fundA] = standardCoVariance
+
+    #print (covarainceMatrix)
+    np.save('data/covarainceMatrix.npy', covarainceMatrix)
+    '''
+
+    '''
+    # Load
+    read_dictionary = np.load('my_file.npy').item()
+    print(read_dictionary['hello']) # displays "world"
+    '''
+
+    #for fundA in covarainceMatrix.keys():
+        # find the highest covariance
+    #    print ("for fund %s, the highest covariance is %s:" % (fundA, max(covarainceMatrix[fundA].values())))
+
+    print ("END.")
+
 if __name__ == "__main__":
-    '''
-        analyzeRisk
-        analyzePortfolio
-        analyzeHistoricalValue
-        getHistoricalValue
-    '''
     fire.Fire()

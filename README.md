@@ -59,3 +59,6 @@ It may be easier to get the historical price of all elements in portfolio, but t
 As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is all managers tend to use same strategies to manage the fund, for example, for example, if the portfolio of two funds by different managers are related to clean energy, they tend to buy same stocks in almost same ratio, so I can estimate the newer fund by older fund.
 
 I analyze the covariance matrix for all funds and try to find the maximum covariance for each fund, it seems all the maximum covariance is near 1, so we can find a similar fund for every fund.
+```
+python analyzeFundData.py getCovarianceMatrixForAllFunds
+```
