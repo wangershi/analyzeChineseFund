@@ -63,6 +63,6 @@ I analyze the covariance matrix for all funds and try to find the maximum covari
 python analyzeFundData.py getCorrelationMatrixForAllFunds
 ```
 
-![average return](image/averageReturn_30.png)
+![average return](image/maximum_correlation.png)
 
 As we can see, most of the maximum correlation are near 1.0, this means we can find a similar fund for every fund.
