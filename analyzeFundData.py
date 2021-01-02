@@ -460,77 +460,100 @@ def getAverageSlopeForFundsInSameRange():
 
     print ("END.")
 
-def getCovarianceMatrixForAllFunds():
-    print ("Begin to get covariance matrix for all funds...")
+def getCorrelationMatrixForAllFunds():
+    print ("Begin to get Pearson's correlation matrix for all funds...")
 
     rootFolder = "./data/dayInStandard"
 
     listOfFunds = []
+    ifGetCorrFromFile = True
+    ifGetDfMergeFromFile = True
 
+    count = 0
     for file in os.listdir(rootFolder):
         fundCode = file.split("_")[0]
+
+        #if fundCode not in ["110011", "180003"]:
+        #    continue
+        if count >= 1000000:
+            break
+
         listOfFunds.append(fundCode)
-    #print (listOfFunds)
 
-    #listOfFunds = listOfFunds[:1000]
+        if not ifGetCorrFromFile and not ifGetDfMergeFromFile:
+            pathFund = os.path.join(rootFolder, file)
+            df = pd.read_csv(pathFund)
+            newName = "AccumulativeNetAssetValue_%s" % fundCode
+            df[newName] = df["AccumulativeNetAssetValue"]
+            df = df[["DayInStandard", newName]]
 
-    '''
-    # get covariance
-    # as the trading days is diff between funds, we have to count it singly
-    covarainceMatrix = {}
-    for i in range(len(listOfFunds)):
-        print ("[%s]For fund %s:" % (i, listOfFunds[i]))
+            if count == 0:
+                dfMerge = df
+            else:
+                dfMerge = pd.merge(dfMerge, df, on=['DayInStandard'], how='outer')
+                #print (dfMerge)
 
-        for j in range(i+1, len(listOfFunds)):
-            fundA = listOfFunds[i]
-            fundB = listOfFunds[j]
+        count += 1
 
-            if fundA not in ["110011", "180003"] or fundB not in ["110011", "180003"]:
-                continue
+    if not ifGetCorrFromFile:
+        if not ifGetDfMergeFromFile:
+            dfMerge.to_csv("data/dfMerge.csv")
+        else:
+            dfMerge = pd.read_csv("data/dfMerge.csv", index_col=0)
 
-            #print ("%s vs %s" % (fundA, fundB))
+        #dfMerge = dfMerge.iloc[:,:100]
 
-            pathA = os.path.join(rootFolder, "%s_202012.csv" % fundA)
-            dfA = pd.read_csv(pathA)
-            dfA = dfA[["DayInStandard", "AccumulativeNetAssetValue"]]
-            #print (dfA)
+        dfMerge = dfMerge.drop(labels='DayInStandard',axis=1)
+        print (dfMerge)
 
-            pathB = os.path.join(rootFolder, "%s_202012.csv" % fundB)
-            dfB = pd.read_csv(pathB)
-            dfB = dfB[["DayInStandard", "AccumulativeNetAssetValue"]]
-            #print (dfB)
+        # count correlation
+        corr = dfMerge.corr()
+        corr.to_csv("data/corr.csv")
+    else:
+        corr = pd.read_csv("data/corr.csv", index_col=0)
 
-            dfMerge = pd.merge(dfA,dfB,on=['DayInStandard'])
-            dfMerge = dfMerge[["AccumulativeNetAssetValue_x", "AccumulativeNetAssetValue_y"]]
-            covariance = dfMerge.cov(ddof=0)
-            print (covariance)
-            covarianceXY = covariance["AccumulativeNetAssetValue_x"]["AccumulativeNetAssetValue_y"]
-            covarianceXX = covariance["AccumulativeNetAssetValue_x"]["AccumulativeNetAssetValue_x"]
-            covarianceYY = covariance["AccumulativeNetAssetValue_y"]["AccumulativeNetAssetValue_y"]
-            #print (type(covarianceXY))  # <class 'numpy.float64'>
-            standardCoVariance = covarianceXY / math.sqrt(covarianceXX * covarianceYY)
+    print (corr)
+    print ("len(listOfFunds) = %s" % len(listOfFunds))
 
-            if fundA not in covarainceMatrix:
-                covarainceMatrix[fundA] = {}
-            covarainceMatrix[fundA][fundB] = standardCoVariance
+    dictOfMaxCorr = {}
+    countNoSelf = 0
+    for fund in listOfFunds:
+        nameDf = "AccumulativeNetAssetValue_%s" % fund
+        print (nameDf)
 
-            if fundB not in covarainceMatrix:
-                covarainceMatrix[fundB] = {}
-            covarainceMatrix[fundB][fundA] = standardCoVariance
+        # nameDf don't exist in corr
+        try:
+            corrSingle = corr[nameDf].dropna(axis=0)
+        except:
+            continue
 
-    #print (covarainceMatrix)
-    np.save('data/covarainceMatrix.npy', covarainceMatrix)
-    '''
+        try:
+            corrWithoutSelf = corrSingle.drop(labels=nameDf, axis=0)
+        except:
+            corrWithoutSelf = corrSingle
+            countNoSelf += 1
+            print (corrWithoutSelf)
 
-    '''
-    # Load
-    read_dictionary = np.load('my_file.npy').item()
-    print(read_dictionary['hello']) # displays "world"
-    '''
+        maxCorr = float(corrWithoutSelf.max())
+        #print (maxCorr)
+        #print (type(maxCorr))
+        maxCorr = "%.2f" % maxCorr
+        if maxCorr not in dictOfMaxCorr:
+            dictOfMaxCorr[maxCorr] = 1
+        else:
+            dictOfMaxCorr[maxCorr] += 1
 
-    #for fundA in covarainceMatrix.keys():
-        # find the highest covariance
-    #    print ("for fund %s, the highest covariance is %s:" % (fundA, max(covarainceMatrix[fundA].values())))
+    print (dictOfMaxCorr)
+    print ("countNoSelf = %s" % countNoSelf)
+
+    # show it in image
+    plt.xlabel("maximum correlation")
+    plt.ylabel("count")
+    for key in sorted(dictOfMaxCorr.keys()):
+        if key != 'nan':
+            plt.bar(key, dictOfMaxCorr[key], width=0.8)
+
+    plt.savefig("./data/maximum_correlation.png")
 
     print ("END.")
 
