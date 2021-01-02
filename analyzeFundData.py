@@ -516,7 +516,7 @@ def getCorrelationMatrixForAllFunds():
     print ("len(listOfFunds) = %s" % len(listOfFunds))
 
     dictOfMaxCorr = {}
-    countNoSelf = 0
+    minNumber = 0.98
     for fund in listOfFunds:
         nameDf = "AccumulativeNetAssetValue_%s" % fund
         print (nameDf)
@@ -524,34 +524,33 @@ def getCorrelationMatrixForAllFunds():
         # nameDf don't exist in corr
         try:
             corrSingle = corr[nameDf].dropna(axis=0)
-        except:
-            continue
-
-        try:
             corrWithoutSelf = corrSingle.drop(labels=nameDf, axis=0)
         except:
-            corrWithoutSelf = corrSingle
-            countNoSelf += 1
-            print (corrWithoutSelf)
+            continue
 
         maxCorr = float(corrWithoutSelf.max())
         #print (maxCorr)
         #print (type(maxCorr))
-        maxCorr = "%.2f" % maxCorr
+        maxCorr = float("%.3f" % maxCorr)
+        if maxCorr <= minNumber:
+            maxCorr = minNumber
         if maxCorr not in dictOfMaxCorr:
             dictOfMaxCorr[maxCorr] = 1
         else:
             dictOfMaxCorr[maxCorr] += 1
 
     print (dictOfMaxCorr)
-    print ("countNoSelf = %s" % countNoSelf)
 
     # show it in image
+    plt.figure(figsize=(15, 10))
     plt.xlabel("maximum correlation")
     plt.ylabel("count")
     for key in sorted(dictOfMaxCorr.keys()):
         if key != 'nan':
-            plt.bar(key, dictOfMaxCorr[key], width=0.8)
+            if key == minNumber:
+                plt.bar("<=%s" % str(key), dictOfMaxCorr[key], width=0.8, fc='k')
+            else:
+                plt.bar(str(key), dictOfMaxCorr[key], width=0.8, fc='k')
 
     plt.savefig("./data/maximum_correlation.png")
 
