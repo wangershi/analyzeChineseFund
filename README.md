@@ -56,13 +56,23 @@ So it's hard to use the portfolio in all statements, and to simple our model, we
 
 It may be easier to get the historical price of all elements in portfolio, but there are another question, the portfolio is not a full list (Refer to a [Chinese blog](https://zhuanlan.zhihu.com/p/314235923) I wrote). In some funds, about 10% assets is unkonwn, so it's a question how we count it.
 
-As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is all managers tend to use same strategies to manage the fund, for example, for example, if the portfolio of two funds by different managers are related to clean energy, they tend to buy same stocks in almost same ratio, so I can estimate the newer fund by older fund.
+As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is that the investing strategies is limited and we can find the strategies using by another manager is same or similar to any strategy.
 
-I analyze the Pearsom's correlation matrix for all funds and try to find the maximum correlation for each fund, it seems all the maximum correlation is near 1, so we can find a similar fund for every fund.
+This can be verified by the correlation of two funds' net value. For example we can use Pearson's correlation method to get the correlation between fund '110011' and other funds.
+
+![average return](image/correlation_110011.png)
+
+For Pearson's correlation, "1" represents these two funds are fully correlated, "-1" represents these two funds are totally negative correlated, "0" represents these two funds are totally uncorrelated.
+
+So, little funds are negative correlated with fund '110011', and the funds are mainly correlated with this fund, partically, some numbers of correlation are 1.0 so some funds are fully correlated with fund '110011'.
+
+This is consistent with our qualitative analysis. For example, if the portfolio of two funds by different managers are related to clean energy, they tend to buy same stocks in almost same ratio.
+
+To confirm it, I analyze the Pearsom's correlation matrix for all funds and try to find the maximum correlation for each fund, it seems all the maximum correlation is near 1, so we can find a similar fund for every fund.
 ```
 python analyzeFundData.py getCorrelationMatrixForAllFunds
 ```
 
 ![average return](image/maximum_correlation.png)
 
-As we can see, most of the maximum correlation are near 1.0, this means we can find a similar fund for every fund.
+

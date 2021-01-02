@@ -460,6 +460,103 @@ def getAverageSlopeForFundsInSameRange():
 
     print ("END.")
 
+def getCorrelationMatrixForOneFund():
+    print ("Begin to get Pearson's correlation matrix for fund '110011'...")
+
+    rootFolder = "./data/dayInStandard"
+
+    listOfFunds = []
+    ifGetCorrFromFile = True
+    ifGetDfMergeFromFile = True
+
+    count = 0
+    for file in os.listdir(rootFolder):
+        fundCode = file.split("_")[0]
+
+        #if fundCode not in ["110011", "180003"]:
+        #    continue
+        if count >= 1000000:
+            break
+
+        listOfFunds.append(fundCode)
+
+        if not ifGetCorrFromFile and not ifGetDfMergeFromFile:
+            pathFund = os.path.join(rootFolder, file)
+            df = pd.read_csv(pathFund)
+            newName = "AccumulativeNetAssetValue_%s" % fundCode
+            df[newName] = df["AccumulativeNetAssetValue"]
+            df = df[["DayInStandard", newName]]
+
+            if count == 0:
+                dfMerge = df
+            else:
+                dfMerge = pd.merge(dfMerge, df, on=['DayInStandard'], how='outer')
+                #print (dfMerge)
+
+        count += 1
+
+    if not ifGetCorrFromFile:
+        if not ifGetDfMergeFromFile:
+            dfMerge.to_csv("data/dfMerge.csv")
+        else:
+            dfMerge = pd.read_csv("data/dfMerge.csv", index_col=0)
+
+        #dfMerge = dfMerge.iloc[:,:100]
+
+        dfMerge = dfMerge.drop(labels='DayInStandard',axis=1)
+        print (dfMerge)
+
+        # count correlation
+        corr = dfMerge.corr()
+        corr.to_csv("data/corr.csv")
+    else:
+        corr = pd.read_csv("data/corr.csv", index_col=0)
+
+    print (corr)
+    print ("len(listOfFunds) = %s" % len(listOfFunds))
+
+    nameFund = "AccumulativeNetAssetValue_110011"
+    corrFund = corr[nameFund].dropna(axis=0)
+    print ("corrFund = %s" % corrFund)
+
+    dictOfCorr = {}
+    minNumber = 0.98
+    for fund in listOfFunds:
+        if fund == "110011":
+            continue
+
+        nameDf = "AccumulativeNetAssetValue_%s" % fund
+        print (nameDf)
+
+        try:
+            corrSingle = corrFund[nameDf]
+            print ("corrSingle = %s" % corrSingle)
+
+            corrSingle = float("%.1f" % corrSingle)
+            if corrSingle not in dictOfCorr:
+                dictOfCorr[corrSingle] = 1
+            else:
+                dictOfCorr[corrSingle] += 1
+        except:
+            continue
+
+    print (dictOfCorr)
+
+    # show it in image
+    plt.figure(figsize=(15, 10))
+    plt.xlabel("correlation")
+    plt.ylabel("count")
+    for key in sorted(dictOfCorr.keys()):
+        if key != 'nan':
+            if key == minNumber:
+                plt.bar("<=%s" % str(key), dictOfCorr[key], width=0.8, fc='k')
+            else:
+                plt.bar(str(key), dictOfCorr[key], width=0.8, fc='k')
+
+    plt.savefig("./data/correlation_110011.png")
+
+    print ("END.")
+
 def getCorrelationMatrixForAllFunds():
     print ("Begin to get Pearson's correlation matrix for all funds...")
 
