@@ -59,6 +59,9 @@ It may be easier to get the historical price of all elements in portfolio, but t
 As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is that the investing strategies is limited and we can find the strategies using by another manager is same or similar to any strategy.
 
 This can be verified by the correlation of two funds' net value. For example we can use Pearson's correlation method to get the correlation between fund '110011' and other funds.
+```
+python analyzeFundData.py getCorrelationMatrixForOneFund
+```
 
 ![average return](image/correlation_110011.png)
 
