@@ -43,7 +43,7 @@ But this will bother us when we want to choose some funds when we want to buy, i
 
 So in next section I will find a way to elimate the influence of foundation date and flatten the average return.
 
-## flatten average return
+## how to flatten average return
 As the purpose is to compare all funds in same time range, it's a good way to estimate the return in 3 years for those funds founding less than 3 years.
 
 So the question is, how can we estimate?
@@ -54,7 +54,7 @@ For a fund, we count the net value by count its portfolio (deposit, bond and som
 
 So it's hard to use the portfolio in all statements, and to simple our model, we assume the portfolio keep unchanged.
 
-It may be easier to get the historical price of all elements in portfolio, but there are another question, the portfolio is not a full list (Refer to a [Chinese blog](https://zhuanlan.zhihu.com/p/314235923) I wrote). In some funds, about 10% assets is unkonwn, so it's a question how we count it.
+It may be easier to get the historical price of all elements in portfolio, but there are another question, the portfolio is not a full list (Refer to a [Chinese blog](https://zhuanlan.zhihu.com/p/314235923) I wrote). In some funds, about 10% equities is unkonwn, so it's a question how we count it.
 
 As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is that the investing strategies is limited and we can find the strategies using by another manager is same or similar to any strategy.
 
@@ -78,4 +78,36 @@ python analyzeFundData.py getCorrelationMatrixForAllFunds
 
 ![average return](image/maximum_correlation.png)
 
+Based on analysis above, another way to estimate the return in 3 years is we can let newer fund imitate the return of the older fund with same portfolio. But we can't find two funds with same portfolio, so we should train a model to elimate the influence of different portfolio and unknown equities.
 
+## use GBDT to imitate the older fund
+I use [LightGBM](https://github.com/microsoft/LightGBM) to train GBDT, and I suggest to use Anaconda to install this repository in Ubuntu, it's useful.
+```linux
+conda create --name python36 python=3.6
+source activate python36
+conda install lightgbm
+```
+
+### Data prepare
+#### portfolio
+We use portfolio as one part of input, so we need to change it into a one-shot vector, and we need get the set of elements in portfolio of all funds.
+```
+python prepareDataset.py getAllElementsInPortfolio
+```
+There are 3 parts.
+ - assetsAllocation. Include bondPortion, cashPortion, stockPortion.
+ - bond. Include 6710 bonds.
+ - stock. Include 2654 stocks.
+
+#### historical value
+Because we need to estimate the return in 3 years for those funds founding less than 3 years, so we can only use the funds founding more than 3 years as the training and test sets.
+
+But which day can we pick to estimate the return in 3 years? 2 years or 1 years? This is a question, we can't fix the virtual founding day, one reason is the funds we estimate have multi founding days, and it's ridiculous for us to find a lucky day we assign to do this job.
+
+So I will choose multi days to estimate it, for example, I will use the return in 2 years to estimate the return in 3 years, also, I will use the return in 1 years to estimate the return in 3 years, this means the input includes virtual founding day.
+
+There are another question, which day we use to estimate the return for those funds founding less than 3 years?
+
+Use the last day? I don't think so. As the stock market are chaotic, we don't know why the stocks rise or go down in one day, so do funds. So I prefer to use lots of virtual founding days to estimate the return in 3 years.
+
+But actually, the near two days the estimation is clearer, so I will add weights for those predicted results and I want the model to get the weights automatically.

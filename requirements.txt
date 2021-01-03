@@ -3,3 +3,6 @@ pandas==1.1.4
 Beautifulsoup4==4.9.3
 lxml==4.6.2
 fire==0.3.1
+numpy==1.19.4
+matplotlib==3.3.3
+lightgbm==3.1.1
