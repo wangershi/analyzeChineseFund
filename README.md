@@ -96,8 +96,13 @@ python prepareDataset.py getAllElementsInPortfolio
 ```
 There are 3 parts.
  - assetsAllocation. Include bondPortion, cashPortion, stockPortion.
- - bond. Include 6710 bonds.
- - stock. Include 2654 stocks.
+ - bond. Include 6715 bonds.
+ - stock. Include 2855 stocks.
+
+So we can get a sparse matrix for all funds, each coloumn represent a fund and the head record the fund code. Besides, there are 9573 columns representing the set of elements in portfolio.
+```
+python prepareDataset.py getSparseMatrixForPortfolioInAllFunds
+```
 
 #### historical value
 Because we need to estimate the return in 3 years for those funds founding less than 3 years, so we can only use the funds founding more than 3 years as the training and test sets.
