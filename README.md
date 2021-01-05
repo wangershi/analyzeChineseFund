@@ -35,7 +35,7 @@ python analyzeFundData.py getAverageSlopeForFundsInSameRange
 ```
 We can get the average of annualized return.
 
-![average return](image/averageReturn_30.png)
+![averageReturn_30](image/averageReturn_30.png)
 
 It's easy to find some interesting points in this chart, the average return is not same in different days, and the highest is the funds founding in ~150 days, almost the day after pandamic in China (Although it seems the pandemic won't disappear in 2021, but the market think China recoverd from pandemic in March 2020 and it had been controlled), in that time the market recovered from the pandemic and almost every fund earns a lot after that.
 
@@ -63,7 +63,7 @@ This can be verified by the correlation of two funds' net value. For example we 
 python analyzeFundData.py getCorrelationMatrixForOneFund
 ```
 
-![average return](image/correlation_110011.png)
+![correlation_110011](image/correlation_110011.png)
 
 For Pearson's correlation, "1" represents these two funds are fully correlated, "-1" represents these two funds are totally negative correlated, "0" represents these two funds are totally uncorrelated.
 
@@ -76,7 +76,7 @@ To confirm it, I analyze the Pearsom's correlation matrix for all funds and try 
 python analyzeFundData.py getCorrelationMatrixForAllFunds
 ```
 
-![average return](image/maximum_correlation.png)
+![maximum_correlation](image/maximum_correlation.png)
 
 Based on analysis above, another way to estimate the return in 3 years is we can let newer fund imitate the return of the older fund with same portfolio. But we can't find two funds with same portfolio, so we should train a model to elimate the influence of different portfolio and unknown equities.
 
@@ -99,7 +99,7 @@ There are 3 parts.
  - bond. Include 6715 bonds.
  - stock. Include 2855 stocks.
 
-So we can get a sparse matrix for all funds, each coloumn represent a fund and the head record the fund code. Besides, there are 9573 columns representing the set of elements in portfolio.
+So we can get a sparse matrix for portfolio of all funds, each coloumn represent a fund and the head record the fund code. Besides, there are 9573 columns representing the set of elements in portfolio.
 ```
 python prepareDataset.py getSparseMatrixForPortfolioInAllFunds
 ```
@@ -116,3 +116,19 @@ There are another question, which day we use to estimate the return for those fu
 Use the last day? I don't think so. As the stock market are chaotic, we don't know why the stocks rise or go down in one day, so do funds. So I prefer to use lots of virtual founding days to estimate the return in 3 years.
 
 But actually, the near two days the estimation is clearer, so I will add weights for those predicted results and I want the model to get the weights automatically.
+
+## Correlation between portfolio of two funds
+As we can get sparse matrix for portfolio of all funds, we can use cosine between two vectors in this matrix to represent the correlation of two funds.
+```
+python analyzePortfolio.py getCosineOfSparseMatrixForPortfolio
+```
+
+We can analyze one fund.
+```
+python analyzePortfolio.py analyzeCosineForOneFund
+```
+
+![cosine_519162](image/cosine_519162.png)
+
+It seems most of the values are located around 0 or 1.
+

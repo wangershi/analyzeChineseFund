@@ -320,6 +320,7 @@ def crawlAssetsAllocation(fundCode):
         except Exception as e:
             print(str(e))
 
+    # TODO: error happens in fond "150343", stock is 81.99% and cash is 82.66%
     portfolio = []
     if data:
         try:
