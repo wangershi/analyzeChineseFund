@@ -135,6 +135,6 @@ python analyzePortfolio.py analyzeCosineForOneFund
 
 It seems most of the values are located around 0 or 1.
 
-We can regard cosine as some forms of correlation, where cosine=1 means those two funds are related. But this image is different with the correlation image in [fund managers tend to use similar strategy](###fund managers tend to use similar strategy), where the last image have few correlation locating around 0. To confirm this, I print it in the image, coordinate x represents cosine, coordinate y represents Pearson's correlation.
+We can regard cosine as some forms of correlation, where cosine=1 means those two funds are related. But this image is different with the correlation image in [fund managers tend to use similar strategy](###fund-managers-tend-to-use-similar-strategy), where the last image have few correlation locating around 0. To confirm this, I print it in the image, coordinate x represents cosine, coordinate y represents Pearson's correlation.
 
 
