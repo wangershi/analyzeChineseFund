@@ -45,7 +45,7 @@ def getCosineOfSparseMatrixForPortfolio():
 
 def analyzeCosineForOneFund():
 	corrForPortfolio = pd.read_csv("data/dfCosineSimilarityForPortfolio.csv", index_col=0)
-	nameFund = "161824"
+	nameFund = "110011"
 	corrFund = corrForPortfolio[nameFund].dropna(axis=0)
 	print ("corrFund = %s" % corrFund)
 

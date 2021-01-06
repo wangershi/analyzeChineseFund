@@ -45,7 +45,7 @@ def getSparseMatrixForPortfolioInAllFunds():
 
     count = 0
     for file in os.listdir(rootFolder):
-        if count >= 1000:
+        if count >= 100000000:
             break
 
         fundCode = file.split("_")[0]
