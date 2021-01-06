@@ -44,14 +44,14 @@ def getCosineOfSparseMatrixForPortfolio():
 	dfCosineSimilarityForPortfolio.to_csv("data/dfCosineSimilarityForPortfolio.csv")
 
 def analyzeCosineForOneFund():
-	corrForPortfolio = pd.read_csv("data/dfCosineSimilarityForPortfolio.csv", index_col=0)
+	dfCosineSimilarityForPortfolio = pd.read_csv("data/dfCosineSimilarityForPortfolio.csv", index_col=0)
 	nameFund = "110011"
-	corrFund = corrForPortfolio[nameFund].dropna(axis=0)
-	print ("corrFund = %s" % corrFund)
+	cosineFund = dfCosineSimilarityForPortfolio[nameFund].dropna(axis=0)
+	print ("cosineFund = %s" % cosineFund)
 
 	dictOfBucket = {}
-	for i, v in corrFund.items():
-		name = corrForPortfolio.columns.values[i]
+	for i, v in cosineFund.items():
+		name = dfCosineSimilarityForPortfolio.columns.values[i]
 		if name == nameFund:
 			continue
 
@@ -73,6 +73,45 @@ def analyzeCosineForOneFund():
 		plt.bar(key, dictOfBucket[key], width=0.8, fc='k')
 
 	plt.savefig("./data/cosine_%s.png" % nameFund)
+
+def compareCosineAndPearsonCorr():
+	ifFetchCosineFundFromFile = True
+	if not ifFetchCosineFundFromFile:
+		dfCosineSimilarityForPortfolio = pd.read_csv("data/dfCosineSimilarityForPortfolio.csv", index_col=0)
+		header = dfCosineSimilarityForPortfolio.columns
+		dfCosineSimilarityForPortfolio.set_index(header, inplace=True)
+		nameFund = "110011"
+		cosineFund = dfCosineSimilarityForPortfolio[nameFund].dropna(axis=0)
+		cosineFund.to_csv("data/cosineFundFor110011.csv")
+	else:
+		cosineFund = pd.read_csv("data/cosineFundFor110011.csv", index_col=0)
+	cosineFund["b"] = cosineFund.T.columns
+	cosineFund["a"] = "AccumulativeNetAssetValue_" + cosineFund["b"].apply(str)
+	cosineFund = cosineFund.drop(labels='b',axis=1)
+	print ("cosineFund = \n%s" % cosineFund)
+
+	ifFetchCorrFundFromFile = True
+	if not ifFetchCorrFundFromFile:
+		corr = pd.read_csv("data/corr.csv", index_col=0)
+		nameFund = "AccumulativeNetAssetValue_110011"
+		corrFund = corr[nameFund].dropna(axis=0)
+		corrFund.to_csv("data/corrFundFor110011.csv")
+	else:
+		corrFund = pd.read_csv("data/corrFundFor110011.csv", index_col=0)
+	corrFund["a"] = corrFund.T.columns
+	print ("corrFund = \n%s" % corrFund)
+	
+	df = pd.merge(cosineFund, corrFund, on=['a'], how='outer')
+	print (df)
+
+	# delete useless columns
+	df = df.drop(labels='a', axis=1)
+	print (df)
+	print (df.corr())
+	df.plot.scatter(x='110011', y='AccumulativeNetAssetValue_110011')
+	plt.xlabel("cosine")
+	plt.ylabel("PearsonCorr")
+	plt.savefig("./data/cosine_PearsonCorr.png")
 
 if __name__ == "__main__":
 	fire.Fire()

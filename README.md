@@ -136,3 +136,10 @@ python analyzePortfolio.py analyzeCosineForOneFund
 It seems most of the values are located around 0 or 1.
 
 We can regard cosine as some forms of correlation, where cosine=1 means those two funds are related. But this image is different with the correlation image in [fund managers tend to use similar strategy](#fund-managers-tend-to-use-similar-strategy), where the last image have few correlation locating around 0. To confirm this, I print it in the image, coordinate x represents cosine, coordinate y represents Pearson's correlation.
+```
+python analyzePortfolio.py compareCosineAndPearsonCorr
+```
+
+![cosine_PearsonCorr](image/cosine_PearsonCorr.png)
+
+It seems these 2 metrics are not related, and the Pearson correlation between them are 0.134506. I think we can understand it easily, two funds with different portfolio can have same returns.
