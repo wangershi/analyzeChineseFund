@@ -128,7 +128,7 @@ We can analyze one fund.
 python analyzePortfolio.py analyzeCosineForOneFund
 ```
 
-![cosine_519162](image/cosine_519162.png)
+![cosine_110011](image/cosine_110011.png)
 
 It seems most of the values are located around 0 or 1.
 
