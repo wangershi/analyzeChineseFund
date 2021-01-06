@@ -48,6 +48,7 @@ As the purpose is to compare all funds in same time range, it's a good way to es
 
 So the question is, how can we estimate?
 
+### can we count the net value by count its portfolio?
 For a fund, we count the net value by count its portfolio (deposit, bond and some stocks). But there are two difficulties to get the porfolio in all days.
  - The fund managers publish the statements regularly, e.g., three months. We can't get the fortfolio between the publishing date
  - The fortfolio in the publishing date is different with the fortfolio in statements, but we don't konw the exact date
@@ -56,6 +57,7 @@ So it's hard to use the portfolio in all statements, and to simple our model, we
 
 It may be easier to get the historical price of all elements in portfolio, but there are another question, the portfolio is not a full list (Refer to a [Chinese blog](https://zhuanlan.zhihu.com/p/314235923) I wrote). In some funds, about 10% equities is unkonwn, so it's a question how we count it.
 
+### fund managers tend to use similar strategy
 As there are a lot difficulties to estimate the value by count the historical price of all elements in portfolio, I want to solve this by another perspective. The hypothesis is that the investing strategies is limited and we can find the strategies using by another manager is same or similar to any strategy.
 
 This can be verified by the correlation of two funds' net value. For example we can use Pearson's correlation method to get the correlation between fund '110011' and other funds.
@@ -71,6 +73,7 @@ So, little funds are negative correlated with fund '110011', and the funds are m
 
 This is consistent with our qualitative analysis. For example, if the portfolio of two funds by different managers are related to clean energy, they tend to buy same stocks in almost same ratio.
 
+### confirm it in all funds
 To confirm it, I analyze the Pearsom's correlation matrix for all funds and try to find the maximum correlation for each fund, it seems all the maximum correlation is near 1, so we can find a similar fund for every fund.
 ```
 python analyzeFundData.py getCorrelationMatrixForAllFunds
@@ -117,7 +120,7 @@ Use the last day? I don't think so. As the stock market are chaotic, we don't kn
 
 But actually, the near two days the estimation is clearer, so I will add weights for those predicted results and I want the model to get the weights automatically.
 
-## Correlation between portfolio of two funds
+## Cosine between portfolio of two funds
 As we can get sparse matrix for portfolio of all funds, we can use cosine between two vectors in this matrix to represent the correlation of two funds.
 ```
 python analyzePortfolio.py getCosineOfSparseMatrixForPortfolio
@@ -131,4 +134,7 @@ python analyzePortfolio.py analyzeCosineForOneFund
 ![cosine_110011](image/cosine_110011.png)
 
 It seems most of the values are located around 0 or 1.
+
+We can regard cosine as some forms of correlation, where cosine=1 means those two funds are related. But this image is different with the correlation image in (fund managers tend to use similar strategy)[### fund managers tend to use similar strategy], where the last image have few correlation locating around 0. To confirm this, I print it in the image, coordinate x represents cosine, coordinate y represents Pearson's correlation.
+
 
