@@ -1,6 +1,7 @@
 import fire
 import os
 import pandas as pd
+import configparser
 
 def getAllElementsInPortfolio():
     rootFolder = "./data/portfolio"
@@ -75,6 +76,102 @@ def getSparseMatrixForPortfolioInAllFunds():
 
     print (dfSparsePortfolio)
     dfSparsePortfolio.to_csv("data/dfSparsePortfolio.csv")
+
+def prepareTrainDataset():
+    # read config file
+    cf = configparser.ConfigParser()
+    cf.read("config/config.ini")
+    daysRangeInOneYear = int(cf.get("Data-Prepare", "daysRangeInOneYear"))
+    numberOfYears = int(cf.get("Data-Prepare", "numberOfYears"))
+    daysRange = daysRangeInOneYear * numberOfYears
+    #print (daysRange)   # 756
+
+    dfSparsePortfolio = pd.read_csv("data/dfSparsePortfolio_100.csv", index_col=0)
+    print (dfSparsePortfolio)
+
+    header = dfSparsePortfolio.columns[1:].to_list()
+    print ("header = %s" % header)
+
+    ifSavePortfolioIndex = False
+    if ifSavePortfolioIndex:
+        dfPortfolioIndex = dfSparsePortfolio["FullElements"]
+        dfPortfolioIndex.to_csv("data/dfPortfolioIndex.csv")
+
+    folderToSaveTrainDataset = "data/trainDataset/"
+    if not os.path.exists(folderToSaveTrainDataset):
+        os.mkdir(folderToSaveTrainDataset)
+
+    count = 0
+    for fundCode in header:
+        if count >= 100000:
+            break
+
+        pathFund = os.path.join("data/dayInStandard", "%s_202012.csv" % fundCode)
+        
+        if not os.path.exists(pathFund):
+            continue
+
+        dfFund = pd.read_csv(pathFund, index_col=0)
+
+        # must have 3 years
+        maxDayInStandard = dfFund["DayInStandard"].max()
+        if (maxDayInStandard < (daysRange - 1)):
+            continue
+
+        # must have value in latest day
+        minDayInStandard = dfFund["DayInStandard"].min()
+        if (minDayInStandard != 0):
+            continue
+
+        print ("count = %s\tfundCode = %s" % (count, fundCode))
+        print ("maxDayInStandard = %s" % maxDayInStandard)  # 755
+
+        '''
+        # get the latest value
+        latestDayForFund = dfFund[dfFund["DayInStandard"] == 0]
+        print (latestDayForFund)
+        valueInLatestDay = latestDayForFund.iloc[0]["AccumulativeNetAssetValue"]
+        print ("valueInLatestDay = %s" % valueInLatestDay)  # 1.4696
+        '''
+
+        # get the earliest value
+        earliestDayForFund = dfFund[dfFund["DayInStandard"] == (daysRange - 1)]
+        #print (earliestDayForFund) # 1.3769999999999998
+        valueInEarliestDay = earliestDayForFund.iloc[0]["AccumulativeNetAssetValue"]
+        #print ("valueInEarliestDay = %s" % valueInEarliestDay)  # 1.4696
+
+        # count the adjust factor, we can get the value in 3 years
+        # by adjustFactorToLatestDay * (value[0]/value[day])
+        dfFund["adjustFactorToLatestDay"] =  dfFund["AccumulativeNetAssetValue"] / valueInEarliestDay
+        dfFund = dfFund[["DayInStandard", "adjustFactorToLatestDay"]]
+
+        # abandon the latest day, it's meaningless
+        dfFund.reset_index(drop=True, inplace=True)
+        dfFund = dfFund.T
+        dfFund = dfFund.drop(labels=0, axis=1)
+        dfFund = dfFund.T
+        # reset index to concat with dfSparsePortfolioForThisFund
+        dfFund.reset_index(drop=True, inplace=True)
+        dfFund = dfFund.T
+
+        #print ("dfFund = \n%s" % dfFund)
+
+        dfSparsePortfolioForThisFund = dfSparsePortfolio[[fundCode]]
+        dfSparsePortfolioForThisFund = dfSparsePortfolioForThisFund.T
+        # duplicate to concat with dfSparsePortfolioForThisFund
+        dfSparsePortfolioForThisFund = pd.concat([dfSparsePortfolioForThisFund]*dfFund.shape[1])
+        # reset index to concat with dfSparsePortfolioForThisFund
+        dfSparsePortfolioForThisFund.reset_index(drop=True, inplace=True)
+        dfSparsePortfolioForThisFund = dfSparsePortfolioForThisFund.T
+        #print ("dfSparsePortfolioForThisFund = %s" % dfSparsePortfolioForThisFund)
+
+        dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfFund], axis=0)
+        print (dfDataset)
+
+        dfDataset.to_csv(os.path.join(folderToSaveTrainDataset, "%s.tsv" % fundCode))
+
+        count += 1
+        #break
 
 if __name__ == "__main__":
 	fire.Fire()
