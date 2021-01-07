@@ -168,7 +168,7 @@ def prepareTrainDataset():
         dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfFund], axis=0)
         print (dfDataset)
 
-        dfDataset.to_csv(os.path.join(folderToSaveTrainDataset, "%s.tsv" % fundCode))
+        dfDataset.to_csv(os.path.join(folderToSaveTrainDataset, "%s.csv" % fundCode))
 
         count += 1
         #break
