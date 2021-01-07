@@ -224,9 +224,15 @@ def getHistoricalValue():
     # read fund information
     dfForFundInformation = pd.read_csv("./data/fundInformation/fundInformation_202012.csv", dtype=object)
 
+    # read config file
+    cf = configparser.ConfigParser()
+    cf.read("config/config.ini")
+
     # days range to analyze, 252 is the trading days in one year
-    daysRangeInOneYear = 252
-    daysRangeToAnalyze = daysRangeInOneYear * 3
+    daysRangeInOneYear = int(cf.get("Data-Prepare", "daysRangeInOneYear"))
+    numberOfYears = int(cf.get("Data-Prepare", "numberOfYears"))
+
+    daysRangeToAnalyze = daysRangeInOneYear * numberOfYears
     minDaysRange = 60
 
     rootFolder = "./data/historicalValue"
