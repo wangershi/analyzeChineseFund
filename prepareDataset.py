@@ -86,7 +86,7 @@ def prepareTrainDataset():
     daysRange = daysRangeInOneYear * numberOfYears
     #print (daysRange)   # 756
 
-    dfSparsePortfolio = pd.read_csv("data/dfSparsePortfolio_100.csv", index_col=0)
+    dfSparsePortfolio = pd.read_csv("data/dfSparsePortfolio_1000.csv", index_col=0)
     print (dfSparsePortfolio)
 
     header = dfSparsePortfolio.columns[1:].to_list()
