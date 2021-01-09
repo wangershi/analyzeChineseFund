@@ -84,13 +84,6 @@ python analyzeFundData.py getCorrelationMatrixForAllFunds
 Based on analysis above, another way to estimate the return in 3 years is we can let newer fund imitate the return of the older fund with same portfolio. But we can't find two funds with same portfolio, so we should train a model to elimate the influence of different portfolio and unknown equities.
 
 ## use GBDT to imitate the older fund
-I use [LightGBM](https://github.com/microsoft/LightGBM) to train GBDT, and I suggest to use Anaconda to install this repository in Ubuntu, it's useful.
-```linux
-conda create --name python36 python=3.6
-source activate python36
-conda install lightgbm
-```
-
 ### Data prepare
 #### portfolio
 We use portfolio as one part of input, so we need to change it into a one-shot vector, and we need get the set of elements in portfolio of all funds.
@@ -120,7 +113,7 @@ Use the last day? I don't think so. As the stock market are chaotic, we don't kn
 
 But actually, the near two days the estimation is clearer, so I will add weights for those predicted results and I want the model to get the weights automatically.
 
-## Cosine between portfolio of two funds
+#### Cosine between portfolio of two funds
 As we can get sparse matrix for portfolio of all funds, we can use cosine between two vectors in this matrix to represent the correlation of two funds.
 ```
 python analyzePortfolio.py getCosineOfSparseMatrixForPortfolio
@@ -143,3 +136,25 @@ python analyzePortfolio.py compareCosineAndPearsonCorr
 ![cosine_PearsonCorr](image/cosine_PearsonCorr.png)
 
 It seems these 2 metrics are not related, and the Pearson correlation between them are 0.134506. I think we can understand it easily, two funds with different portfolio can have same returns.
+
+#### get training dataset
+You can use below commands.
+```
+python prepareDataset.py prepareTrainDataset
+```
+It will get dataset for every fund which found 3 years ago. I count it and the number is 4340, as there are 9159 funds in folder "dayInStandard", we substract it and we can get 4819 funds which found less than 3 years.
+
+### training
+
+I use [LightGBM](https://github.com/microsoft/LightGBM) to train GBDT, and I suggest to use Anaconda to install this repository in Ubuntu, it's useful.
+```linux
+conda create --name python36 python=3.6
+source activate python36
+conda install lightgbm
+```
+
+You can train the model and evaluate it like this.
+```
+python trainGBDT.py
+```
+
