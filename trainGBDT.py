@@ -10,71 +10,49 @@ def trainModel():
 	print('Loading data...')
 
 	ifLoadDatasetFromFile = False
+	ifSample = False
+	ifOnlyUseassetsAllocation = True
 
+	listOfDfSingle = []
 	if not ifLoadDatasetFromFile:
 		# create the dataset
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
-		countTrain = 0
-		countEvaluate = 0
-		ratioOfTrainInWholeDataset = 0.8
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 100:
+			if count >= 1000000:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
 			filePath = os.path.join(folderOfTrainDataset, file)
 			dfSingle = pd.read_csv(filePath, index_col=0).T
+			if ifSample:
+				dfSingle = dfSingle.sample(frac=0.1, axis=0)
+			if ifOnlyUseassetsAllocation:
+				dfSingle = dfSingle[[0, 1, 2, "DayInStandard", "adjustFactorToLatestDay"]]
 			#print (dfSingle)
 
-			# use it as train dataset
-			if random.random() <= ratioOfTrainInWholeDataset:
-				if countTrain == 0:
-					dfTrain = dfSingle
-				else:
-					dfTrainTemp = dfTrain.append(dfSingle, ignore_index=True)
-					del(dfTrain)
-					dfTrain = dfTrainTemp
-					del(dfTrainTemp)
+			listOfDfSingle.append(dfSingle)
 
-				countTrain += 1
-			# use it as evaluate dataset
-			else:
-				if countEvaluate == 0:
-					dfEvaluate = dfSingle
-				else:
-					dfEvaluateTemp = dfEvaluate.append(dfSingle, ignore_index=True)
-					del(dfEvaluate)
-					dfEvaluate = dfEvaluateTemp
-					del(dfEvaluateTemp)
-
-				countEvaluate += 1
-
-			del(dfSingle)
 			count += 1
 
-		#dfTrain = dfTrain.T
-		dfTrain.reset_index(drop=True, inplace=True)
-		print ("dfTrain = %s" % dfTrain)
-		print ("countTrain = %s" % countTrain)
-
-		#dfEvaluate = dfEvaluate.T
-		dfEvaluate.reset_index(drop=True, inplace=True)
-		print ("dfEvaluate = %s" % dfEvaluate)
-		print ("countEvaluate = %s" % countEvaluate)
-
-		print ("count = %s" % count)
-
-		raise
-
-		# save df
-		dfTrain.to_csv("data/dfTrain.csv")
-		dfEvaluate.to_csv("data/dfEvaluate.csv")
+		dfTrainEvaluate = pd.concat(listOfDfSingle, axis=0)
+		dfTrainEvaluate = dfTrainEvaluate.sample(frac=1)	# shuffle
+		dfTrainEvaluate.to_csv("data/dfTrainEvaluate.csv")
 	else:
-		dfTrain = pd.read_csv("data/dfTrain.csv", index_col=0)
-		dfEvaluate = pd.read_csv("data/dfEvaluate.csv", index_col=0)
+		dfTrainEvaluate = pd.read_csv("data/dfTrainEvaluate.csv", index_col=0)
 
-	# TODO: deal with -1 and nan
+	print (dfTrainEvaluate)
+
+	ratioOfTrainInWholeDataset = 0.8
+	numberOfRows = dfTrainEvaluate.shape[0]
+	numberOfTrain = int(numberOfRows * ratioOfTrainInWholeDataset)
+	numberOfEvaluate = numberOfRows - numberOfTrain
+	#print ("numberOfRows = %s" % numberOfRows)
+	dfTrain = dfTrainEvaluate.head(numberOfTrain)
+	dfEvaluate = dfTrainEvaluate.tail(numberOfEvaluate)
+	#print ("dfTrain = %s" % dfTrain)
+	#print ("dfEvaluate = %s" % dfEvaluate)
+
 	yLabel = "adjustFactorToLatestDay"
 	yTrain = dfTrain[yLabel]
 	XTrain = dfTrain.drop(yLabel, axis=1)
@@ -122,7 +100,8 @@ def trainModel():
 def testModel():
 	print('Loading data...')
 
-	ifLoadDatasetFromFile = True
+	ifLoadDatasetFromFile = False
+	ifOnlyUseassetsAllocation = True
 
 	if not ifLoadDatasetFromFile:
 		# create the dataset
@@ -138,6 +117,9 @@ def testModel():
 			#dfSingle.rename(columns={"Unnamed: 0":"FundCode"}, inplace=True)
 			dfSingle.reset_index(drop=True, inplace=True)
 			dfSingle = dfSingle.T
+			if ifOnlyUseassetsAllocation:
+				dfSingle = dfSingle[[0, 1, 2, 9573]]
+			#print (dfSingle)
 
 			if count == 0:
 				dfTest = dfSingle

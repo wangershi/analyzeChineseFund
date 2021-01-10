@@ -155,6 +155,18 @@ conda install lightgbm
 
 You can train the model and evaluate it like this.
 ```
-python trainGBDT.py
+python trainGBDT.py trainModel
 ```
 
+Get the adjusted factor to latest day.
+```
+python trainGBDT.py testModel
+```
+
+Evaluate it again.
+```
+python analyzeFundData.py getAverageSlopeForFundsInSameRange
+```
+
+The model flatten the distribution of average return.
+![cosine_110011](image/averageReturn_30_useAdjustFactor.png)
