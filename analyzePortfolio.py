@@ -108,7 +108,7 @@ def compareCosineAndPearsonCorr():
 	df = df.drop(labels='a', axis=1)
 	print (df)
 	print (df.corr())
-	df.plot.scatter(x='110011', y='AccumulativeNetAssetValue_110011')
+	df.plot.scatter(x='110011', y='AccumulativeNetAssetValue_110011', c='k')
 	plt.xlabel("cosine")
 	plt.ylabel("PearsonCorr")
 	plt.savefig("./data/cosine_PearsonCorr.png")
