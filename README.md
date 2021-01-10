@@ -142,7 +142,7 @@ You can use below commands.
 ```
 python prepareDataset.py prepareTrainDataset
 ```
-It will get dataset for every fund which found 3 years ago. I count it and the number is 4340, as there are 9159 funds in folder "dayInStandard", we substract it and we can get 4819 funds which found less than 3 years.
+It will get dataset for every fund which found 3 years ago. I count it and the number is 4340, as there are 9159 funds in folder "dayInStandard", we substract it and we can get 4819 funds which found less than 3 years (actually get 4543).
 
 ### training
 
