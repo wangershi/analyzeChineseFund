@@ -399,7 +399,7 @@ def getAverageSlopeForFundsInSameRange():
         #    continue
         fundCode = file.split("_")[0]
 
-        if count >= 100000:
+        if count >= 10000000:
             break
         print ("\ncount = %s\tfundCode = %s" % (count, fundCode))  # 180003
 
@@ -477,7 +477,7 @@ def getAverageSlopeForFundsInSameRange():
         except Exception as e:
             raise e
 
-    print (dictOfSlopeInCountNetValue)
+    #print (dictOfSlopeInCountNetValue)
     plt.xlabel("count of NetValue")
     plt.ylabel("average slope for return/risk")
     for key in dictOfSlopeInCountNetValue.keys():
@@ -501,15 +501,17 @@ def getAverageSlopeForFundsInSameRange():
 
     plt.savefig("./data/%s.png" % nameOfReturnRisk)
 
-    print (dictOfReturnInCountNetValue)
+    #print (dictOfReturnInCountNetValue)
     plt.clf()
     plt.xlabel("count of NetValue")
     plt.ylabel("return")
+    listOfMean = []
     for key in dictOfReturnInCountNetValue.keys():
         # Number of observations
         n = len(dictOfReturnInCountNetValue[key])
         # Mean of the data
         mean = sum(dictOfReturnInCountNetValue[key]) / n
+        listOfMean.append(mean)
         # Square deviations
         deviations = [(x - mean) ** 2 for x in dictOfReturnInCountNetValue[key]]
         # standard deviation
@@ -519,13 +521,17 @@ def getAverageSlopeForFundsInSameRange():
 
     nameOfReturn = "averageReturn_%s" % divideNumber
 
+    # get the standard deviation of mean
+    standardDeviationOfReturn = np.std(listOfMean, ddof = 0)
+    print ("standardDeviationOfReturn = %s" % standardDeviationOfReturn)
+
     if ifUseAdjustFactorToLatestDay:
         nameOfReturn += "_useAdjustFactor"
     else:
         nameOfReturn += "_notUseAdjustFactor"
     plt.savefig("./data/%s.png" % nameOfReturn)
 
-    print (dictOfRiskInCountNetValue)
+    #print (dictOfRiskInCountNetValue)
     plt.clf()
     plt.xlabel("count of NetValue")
     plt.ylabel("risk")
