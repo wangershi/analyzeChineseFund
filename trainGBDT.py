@@ -5,13 +5,16 @@ from sklearn.metrics import mean_squared_error
 import fire
 import os
 import random
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 
 def trainModel():
 	print('Loading data...')
 
 	ifLoadDatasetFromFile = False
 	ifSample = False
-	ifOnlyUseassetsAllocation = True
+	ifOnlyUseAssetsAllocation = True
 
 	listOfDfSingle = []
 	if not ifLoadDatasetFromFile:
@@ -27,7 +30,7 @@ def trainModel():
 			dfSingle = pd.read_csv(filePath, index_col=0).T
 			if ifSample:
 				dfSingle = dfSingle.sample(frac=0.1, axis=0)
-			if ifOnlyUseassetsAllocation:
+			if ifOnlyUseAssetsAllocation:
 				dfSingle = dfSingle[[0, 1, 2, "DayInStandard", "adjustFactorToLatestDay"]]
 			#print (dfSingle)
 
@@ -100,8 +103,8 @@ def trainModel():
 def testModel():
 	print('Loading data...')
 
-	ifLoadDatasetFromFile = False
-	ifOnlyUseassetsAllocation = True
+	ifLoadDatasetFromFile = True
+	ifOnlyUseAssetsAllocation = True
 
 	if not ifLoadDatasetFromFile:
 		# create the dataset
@@ -117,7 +120,7 @@ def testModel():
 			#dfSingle.rename(columns={"Unnamed: 0":"FundCode"}, inplace=True)
 			dfSingle.reset_index(drop=True, inplace=True)
 			dfSingle = dfSingle.T
-			if ifOnlyUseassetsAllocation:
+			if ifOnlyUseAssetsAllocation:
 				dfSingle = dfSingle[[0, 1, 2, 9573]]
 			#print (dfSingle)
 
@@ -144,12 +147,21 @@ def testModel():
 	# can only predict with the best iteration (or the saving iteration)
 	yPred = bst.predict(dfTest)
 	print ("yPred = %s" % yPred)
+	print ("yPred.shape = %s" % yPred.shape)
 	#print ("type(yPred) = %s" % type(yPred))	# <class 'numpy.ndarray'>
 
 	dfTest["adjustFactorToLatestDay"] = yPred
 	dfAdjustFactorToLatestDay = dfTest[["adjustFactorToLatestDay"]].T
 	print ("dfAdjustFactorToLatestDay = %s" % dfAdjustFactorToLatestDay)
 	dfAdjustFactorToLatestDay.to_csv("data/dfAdjustFactorToLatestDay.csv")
+
+	dfTest["yPred"] = yPred
+	print ("dfTest = %s" % dfTest)
+
+	dfTest.plot.scatter(x='9573', y='yPred', c='k')
+	plt.xlabel("day in standard")
+	plt.ylabel("adjust factor to latest day")
+	plt.savefig("./data/adjust_factor_in_testing.png")
 
 if __name__ == "__main__":
 	fire.Fire()

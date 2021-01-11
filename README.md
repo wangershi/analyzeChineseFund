@@ -168,7 +168,10 @@ Evaluate it again.
 python analyzeFundData.py getAverageSlopeForFundsInSameRange
 ```
 
+We get the adjustFactorToLatestDay to dayInStandard.
+![adjust_factor_in_testing](image/adjust_factor_in_testing.png)
+
 The model flatten the distribution of average return.
-![cosine_110011](image/averageReturn_30_useAdjustFactor.png)
+![averageReturn_30_useAdjustFactor](image/averageReturn_30_useAdjustFactor.png)
 
 The standard deviation of average return drop from 0.05202143741465543 to 0.023522143187933338.
