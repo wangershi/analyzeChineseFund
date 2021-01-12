@@ -18,41 +18,32 @@ def trainModel():
 
 	ifLoadDatasetFromFile = False
 
+	listOfXSingleSparse = []
+	listOfYSingle = []
 	if not ifLoadDatasetFromFile:
 		# create the dataset
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 500:
+			if count >= 10:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
 			filePath = os.path.join(folderOfTrainDataset, file)
 			dfSingle = pd.read_csv(filePath, index_col=0).T
 			#print (dfSingle)
-			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
-			xSingleSparse = sparse.csr_matrix(xSingle)
-			ySingle = dfSingle["adjustFactorToLatestDay"]
-			#print (xSingle)
-			#print (ySingle)
-			#print (dfSingle)
 
-			if count == 0:
-				xSparseForTrainDataset = xSingleSparse
-				yForTrainDataset = ySingle
-			else:
-				xSparseForTrainDataset = sparse.vstack((xSparseForTrainDataset, xSingleSparse))
-				yForTrainDataset = pd.concat([yForTrainDataset, ySingle], axis=0)
+			listOfXSingleSparse.append(sparse.csr_matrix(dfSingle.drop("adjustFactorToLatestDay", axis=1)))
+			listOfYSingle.append(dfSingle["adjustFactorToLatestDay"])				
 
 			# clean the memory
 			del(dfSingle)
-			del(xSingle)
-			del(xSingleSparse)
-			del(ySingle)
 			gc.collect()
 
 			count += 1
 
+		xSparseForTrainDataset = sparse.vstack(listOfXSingleSparse)
+		yForTrainDataset = pd.concat(listOfYSingle, axis=0)
 		yForTrainDataset.reset_index(drop=True, inplace=True)
 		sparse.save_npz('data/xSparseForTrainDataset.npz', xSparseForTrainDataset)
 		yForTrainDataset.to_csv("data/yForTrainDataset.csv")
@@ -70,8 +61,8 @@ def trainModel():
 	np.random.shuffle(indice)
 	trainIndice = indice[:int(len(indice) * ratioOfTrainInWholeDataset)]
 	evaluateIndice = indice[int(len(indice) * ratioOfTrainInWholeDataset):]
-	print ("trainIndice = %s" % trainIndice)
-	print ("evaluateIndice = %s" % evaluateIndice)
+	#print ("trainIndice = %s" % trainIndice)
+	#print ("evaluateIndice = %s" % evaluateIndice)
 
 	print ("for train dataset...")
 	xTrain = xSparseForTrainDataset[trainIndice]
@@ -116,7 +107,7 @@ def trainModel():
 	print('Starting predicting...')
 	# predict
 	yPred = gbm.predict(xEvaluate, num_iteration=gbm.best_iteration)
-	print (yPred)
+	print (yPred[:10])
 	# eval
 	print('The rmse of prediction is:', mean_squared_error(yEvaluate, yPred) ** 0.5)
 
