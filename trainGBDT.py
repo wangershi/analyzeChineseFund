@@ -14,7 +14,7 @@ def trainModel():
 
 	ifLoadDatasetFromFile = False
 	ifSample = False
-	ifOnlyUseAssetsAllocation = True
+	ifOnlyUseAssetsAllocation = False
 
 	listOfDfSingle = []
 	if not ifLoadDatasetFromFile:
@@ -22,7 +22,7 @@ def trainModel():
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 1000000:
+			if count >= 100:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
@@ -104,7 +104,7 @@ def testModel():
 	print('Loading data...')
 
 	ifLoadDatasetFromFile = True
-	ifOnlyUseAssetsAllocation = True
+	ifOnlyUseAssetsAllocation = False
 
 	if not ifLoadDatasetFromFile:
 		# create the dataset
