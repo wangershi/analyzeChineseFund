@@ -24,20 +24,20 @@ def trainModel():
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 10000000:
+			if count >= 500:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
 			filePath = os.path.join(folderOfTrainDataset, file)
 			dfSingle = pd.read_csv(filePath, index_col=0).T
+			if ifOnlyUseAssetsAllocation:
+				dfSingle = dfSingle[[0, 1, 2, "DayInStandard", "adjustFactorToLatestDay"]]
 			#print (dfSingle)
 			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
 			xSingleSparse = sparse.csr_matrix(xSingle)
 			ySingle = dfSingle["adjustFactorToLatestDay"]
 			#print (xSingle)
 			#print (ySingle)
-			if ifOnlyUseAssetsAllocation:
-				dfSingle = dfSingle[[0, 1, 2, "DayInStandard", "adjustFactorToLatestDay"]]
 			#print (dfSingle)
 
 			if count == 0:
@@ -48,6 +48,7 @@ def trainModel():
 				yForTrainDataset = pd.concat([yForTrainDataset, ySingle], axis=0)
 
 			# clean the memory
+			del(dfSingle)
 			del(xSingle)
 			del(xSingleSparse)
 			del(ySingle)
