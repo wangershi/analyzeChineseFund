@@ -5,67 +5,89 @@ from sklearn.metrics import mean_squared_error
 import fire
 import os
 import random
+from scipy import sparse
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
+import gc
+gc.enable()
 
 def trainModel():
 	print('Loading data...')
 
 	ifLoadDatasetFromFile = False
-	ifSample = False
 	ifOnlyUseAssetsAllocation = False
 
-	listOfDfSingle = []
 	if not ifLoadDatasetFromFile:
 		# create the dataset
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 100:
+			if count >= 10000000:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
 			filePath = os.path.join(folderOfTrainDataset, file)
 			dfSingle = pd.read_csv(filePath, index_col=0).T
-			if ifSample:
-				dfSingle = dfSingle.sample(frac=0.1, axis=0)
+			#print (dfSingle)
+			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
+			xSingleSparse = sparse.csr_matrix(xSingle)
+			ySingle = dfSingle["adjustFactorToLatestDay"]
+			#print (xSingle)
+			#print (ySingle)
 			if ifOnlyUseAssetsAllocation:
 				dfSingle = dfSingle[[0, 1, 2, "DayInStandard", "adjustFactorToLatestDay"]]
 			#print (dfSingle)
 
-			listOfDfSingle.append(dfSingle)
+			if count == 0:
+				xSparseForTrainDataset = xSingleSparse
+				yForTrainDataset = ySingle
+			else:
+				xSparseForTrainDataset = sparse.vstack((xSparseForTrainDataset, xSingleSparse))
+				yForTrainDataset = pd.concat([yForTrainDataset, ySingle], axis=0)
+
+			# clean the memory
+			del(xSingle)
+			del(xSingleSparse)
+			del(ySingle)
+			gc.collect()
 
 			count += 1
 
-		dfTrainEvaluate = pd.concat(listOfDfSingle, axis=0)
-		dfTrainEvaluate = dfTrainEvaluate.sample(frac=1)	# shuffle
-		dfTrainEvaluate.to_csv("data/dfTrainEvaluate.csv")
+		yForTrainDataset.reset_index(drop=True, inplace=True)
+		sparse.save_npz('data/xSparseForTrainDataset.npz', xSparseForTrainDataset)
+		yForTrainDataset.to_csv("data/yForTrainDataset.csv")
 	else:
-		dfTrainEvaluate = pd.read_csv("data/dfTrainEvaluate.csv", index_col=0)
+		xSparseForTrainDataset = sparse.load_npz('data/xSparseForTrainDataset.npz')
+		yForTrainDataset = pd.read_csv("data/yForTrainDataset.csv", index_col=0)
+		yForTrainDataset = yForTrainDataset["adjustFactorToLatestDay"]
 
-	print (dfTrainEvaluate)
+	print (xSparseForTrainDataset.shape)	# (2958, 9574)
+	print (yForTrainDataset.shape)	# (2958,)
 
+	# split the dataset as train dataset and evaluate dataset
 	ratioOfTrainInWholeDataset = 0.8
-	numberOfRows = dfTrainEvaluate.shape[0]
-	numberOfTrain = int(numberOfRows * ratioOfTrainInWholeDataset)
-	numberOfEvaluate = numberOfRows - numberOfTrain
-	#print ("numberOfRows = %s" % numberOfRows)
-	dfTrain = dfTrainEvaluate.head(numberOfTrain)
-	dfEvaluate = dfTrainEvaluate.tail(numberOfEvaluate)
-	#print ("dfTrain = %s" % dfTrain)
-	#print ("dfEvaluate = %s" % dfEvaluate)
+	indice = np.arange(xSparseForTrainDataset.shape[0])
+	np.random.shuffle(indice)
+	trainIndice = indice[:int(len(indice) * ratioOfTrainInWholeDataset)]
+	evaluateIndice = indice[int(len(indice) * ratioOfTrainInWholeDataset):]
+	print ("trainIndice = %s" % trainIndice)
+	print ("evaluateIndice = %s" % evaluateIndice)
 
-	yLabel = "adjustFactorToLatestDay"
-	yTrain = dfTrain[yLabel]
-	XTrain = dfTrain.drop(yLabel, axis=1)
+	print ("for train dataset...")
+	xTrain = xSparseForTrainDataset[trainIndice]
+	print (xTrain.shape)	# (2366, 9574)
+	yTrain = yForTrainDataset[trainIndice]
+	print (yTrain.shape)	# (2366,)
 
-	yEvaluate = dfEvaluate[yLabel]
-	xEvaluate = dfEvaluate.drop(yLabel, axis=1)
-
+	xEvaluate = xSparseForTrainDataset[evaluateIndice]
+	yEvaluate = yForTrainDataset[evaluateIndice]
+	print (xEvaluate.shape)	# (592, 9574)
+	print (yEvaluate.shape)	# (592,)
 
 	# create dataset for lightgbm
-	lgbTrain = lgb.Dataset(XTrain, yTrain)
+	lgbTrain = lgb.Dataset(xTrain, yTrain)
 	lgbEval = lgb.Dataset(xEvaluate, yEvaluate, reference=lgbTrain)
 
 	# specify the configurations as a dict
