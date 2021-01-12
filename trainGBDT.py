@@ -17,7 +17,6 @@ def trainModel():
 	print('Loading data...')
 
 	ifLoadDatasetFromFile = False
-	ifOnlyUseAssetsAllocation = False
 
 	if not ifLoadDatasetFromFile:
 		# create the dataset
@@ -30,8 +29,6 @@ def trainModel():
 
 			filePath = os.path.join(folderOfTrainDataset, file)
 			dfSingle = pd.read_csv(filePath, index_col=0).T
-			if ifOnlyUseAssetsAllocation:
-				dfSingle = dfSingle[[0, 1, 2, "DayInStandard", "adjustFactorToLatestDay"]]
 			#print (dfSingle)
 			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
 			xSingleSparse = sparse.csr_matrix(xSingle)
@@ -127,7 +124,6 @@ def testModel():
 	print('Loading data...')
 
 	ifLoadDatasetFromFile = True
-	ifOnlyUseAssetsAllocation = False
 
 	if not ifLoadDatasetFromFile:
 		# create the dataset
@@ -143,8 +139,6 @@ def testModel():
 			#dfSingle.rename(columns={"Unnamed: 0":"FundCode"}, inplace=True)
 			dfSingle.reset_index(drop=True, inplace=True)
 			dfSingle = dfSingle.T
-			if ifOnlyUseAssetsAllocation:
-				dfSingle = dfSingle[[0, 1, 2, 9573]]
 			#print (dfSingle)
 
 			if count == 0:
