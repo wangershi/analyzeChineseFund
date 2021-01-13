@@ -23,13 +23,13 @@ def trainModel():
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 200:
+			if count >= 100000:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
 			filePath = os.path.join(folderOfTrainDataset, file)
-			dfSingle = pd.read_csv(filePath, index_col=0).T
-			#print (dfSingle)
+			dfSingle = pd.read_csv(filePath, index_col=0).T.fillna(0)
+			#dfSingle = dfSingle.astype("float16")
 
 			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
 			xSingleSparse = sparse.csr_matrix(xSingle)
@@ -50,10 +50,6 @@ def trainModel():
 			gc.collect()
 
 			count += 1
-
-			if count % 100 == 0:
-				sparse.save_npz('data/xSparseForTrainDataset_%s.npz' % count, xSparseForTrainDataset)
-		
 
 		yForTrainDataset.reset_index(drop=True, inplace=True)
 		sparse.save_npz('data/xSparseForTrainDataset.npz', xSparseForTrainDataset)
@@ -140,7 +136,8 @@ def testModel():
 			dfSingle = pd.read_csv(filePath, index_col=0)
 			#dfSingle.rename(columns={"Unnamed: 0":"FundCode"}, inplace=True)
 			dfSingle.reset_index(drop=True, inplace=True)
-			dfSingle = dfSingle.T
+			dfSingle = dfSingle.T.fillna(0)
+			dfSingle = dfSingle.astype("float16")
 			#print (dfSingle)
 
 			if count == 0:
