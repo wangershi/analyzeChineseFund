@@ -29,7 +29,6 @@ def trainModel():
 
 			filePath = os.path.join(folderOfTrainDataset, file)
 			dfSingle = pd.read_csv(filePath, index_col=0).T.fillna(0)
-			#dfSingle = dfSingle.astype("float16")
 
 			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
 			xSingleSparse = sparse.csr_matrix(xSingle)
@@ -121,7 +120,7 @@ def trainModel():
 def testModel():
 	print('Loading data...')
 
-	ifLoadDatasetFromFile = True
+	ifLoadDatasetFromFile = False
 
 	if not ifLoadDatasetFromFile:
 		# create the dataset
@@ -137,7 +136,6 @@ def testModel():
 			#dfSingle.rename(columns={"Unnamed: 0":"FundCode"}, inplace=True)
 			dfSingle.reset_index(drop=True, inplace=True)
 			dfSingle = dfSingle.T.fillna(0)
-			dfSingle = dfSingle.astype("float16")
 			#print (dfSingle)
 
 			if count == 0:
