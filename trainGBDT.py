@@ -18,14 +18,12 @@ def trainModel():
 
 	ifLoadDatasetFromFile = False
 
-	listOfXSingleSparse = []
-	listOfYSingle = []
 	if not ifLoadDatasetFromFile:
 		# create the dataset
 		folderOfTrainDataset = "data/trainDataset"
 		count = 0
 		for file in os.listdir(folderOfTrainDataset):
-			if count >= 10:
+			if count >= 200:
 				break
 			print ("count = %s\tfile=%s" % (count, file))
 
@@ -33,17 +31,30 @@ def trainModel():
 			dfSingle = pd.read_csv(filePath, index_col=0).T
 			#print (dfSingle)
 
-			listOfXSingleSparse.append(sparse.csr_matrix(dfSingle.drop("adjustFactorToLatestDay", axis=1)))
-			listOfYSingle.append(dfSingle["adjustFactorToLatestDay"])				
+			xSingle = dfSingle.drop("adjustFactorToLatestDay", axis=1)
+			xSingleSparse = sparse.csr_matrix(xSingle)
+			ySingle = dfSingle["adjustFactorToLatestDay"]
+			
+			if count == 0:
+				xSparseForTrainDataset = xSingleSparse
+				yForTrainDataset = ySingle
+			else:
+				xSparseForTrainDataset = sparse.vstack((xSparseForTrainDataset, xSingleSparse))
+				yForTrainDataset = pd.concat([yForTrainDataset, ySingle], axis=0)
 
 			# clean the memory
-			del(dfSingle)
+			del dfSingle
+			del xSingle
+			del xSingleSparse
+			del ySingle
 			gc.collect()
 
 			count += 1
 
-		xSparseForTrainDataset = sparse.vstack(listOfXSingleSparse)
-		yForTrainDataset = pd.concat(listOfYSingle, axis=0)
+			if count % 100 == 0:
+				sparse.save_npz('data/xSparseForTrainDataset_%s.npz' % count, xSparseForTrainDataset)
+		
+
 		yForTrainDataset.reset_index(drop=True, inplace=True)
 		sparse.save_npz('data/xSparseForTrainDataset.npz', xSparseForTrainDataset)
 		yForTrainDataset.to_csv("data/yForTrainDataset.csv")
