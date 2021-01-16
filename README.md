@@ -178,4 +178,4 @@ We get the adjustFactorToLatestDay to dayInStandard.
 The model flatten the distribution of average return.
 ![averageReturn_30_useAdjustFactor](image/averageReturn_30_useAdjustFactor.png)
 
-The standard deviation of average return drop from 0.05202143741465543 to 0.023522143187933338.
+The standard deviation of average return drop from 0.0520 to 0.0175.
