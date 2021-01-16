@@ -31,7 +31,7 @@ But it's not smart to exclude those funds simply, in those days I will find a wa
 In this section, I will analyze the average and standard deviation of return, risk, return/risk for funds in same founding days.
 For example, since fund "007994" founded in Mar 25th, 2020, the founding days without non-trading days is 167, I will divide it by 30 and append it it bucket "150" (167//30\*30), and repeat this for all funds.
 ```
-python analyzeFundData.py getAverageSlopeForFundsInSameRange
+python analyzeFundData.py getAverageSlopeForFundsInSameRange --ifUseAdjustFactorToLatestDay=False
 ```
 We can get the average of annualized return.
 
@@ -163,9 +163,13 @@ Get the adjusted factor to latest day.
 python trainGBDT.py testModel
 ```
 
-Evaluate it again.
+I try to use optuna to fine tune automatically, but the result is not good, so I quit it.
 ```
-python analyzeFundData.py getAverageSlopeForFundsInSameRange
+python trainGBDT.py autoFineTune
+```
+
+Evaluate it again.
+python analyzeFundData.py getAverageSlopeForFundsInSameRange --ifUseAdjustFactorToLatestDay=True
 ```
 
 We get the adjustFactorToLatestDay to dayInStandard.

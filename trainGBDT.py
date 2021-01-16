@@ -183,30 +183,18 @@ def trainModel():
     lgbEval = lgb.Dataset(xEvaluate, yEvaluate, reference=lgbTrain)
 
     # specify the configurations as a dict
-    '''
-    params = {
-        'boosting_type': 'gbdt',
-        'objective': 'regression',
-        'metric': {'l2', 'l1'},
-        'num_leaves': 255,
-        'learning_rate': 0.05,
-        'feature_fraction': 0.9,
-        'bagging_fraction': 0.8,
-        'bagging_freq': 5,
-        'verbose': 0
-    }'''
     params = {
         'boosting_type': 'gbdt',
         'objective': 'regression',
         'metric': {'l2', 'l1'},
         'num_threads': 4,   # real CPU cores in Surface Book 2, modify this in other machine
-        'num_leaves': 2**10-1,  # already fine tune
-        'learning_rate': 0.048,  # already fine tune
-        'feature_fraction': 0.607,  # already fine tune
-        'bagging_fraction': 0.607,  # already fine tune
-        'bagging_freq': 8,  # already fine tune
+        'num_leaves': 2**10-1,
+        'learning_rate': 0.2,
+        'feature_fraction': 0.6,
+        'bagging_fraction': 0.6,
+        'bagging_freq': 8,
         'verbose': 0,
-        'min_data_in_leaf': 530  # already fine tune
+        'min_data_in_leaf': 530
     }
 
     print('Starting training...')
@@ -215,7 +203,7 @@ def trainModel():
                     lgbTrain,
                     num_boost_round=200,
                     valid_sets=lgbEval,
-                    early_stopping_rounds=18)
+                    early_stopping_rounds=10)
 
     print('Saving model...')
     # save model to file
