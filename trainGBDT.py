@@ -14,11 +14,9 @@ matplotlib.use('Agg')
 import gc
 gc.enable()
 
-def loadDataset(ifPrint=True):
+def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
     if ifPrint:
-        print('Loading data...')
-
-    ifLoadDatasetFromFile = True
+        print('Loading data...')    
 
     if not ifLoadDatasetFromFile:
         # create the dataset
@@ -275,8 +273,14 @@ def testModel():
         dfTest.plot.scatter(x='9573', y='yPred', c='k')
     except:
         dfTest.plot.scatter(x=9573, y='yPred', c='k')
-    plt.xlabel("day in standard")
-    plt.ylabel("adjust factor to latest day")
+    plt.xlabel("Count of trading days")
+    plt.ylabel("Adjusted factor to latest day")
+    plt.xlim((0, 800))
+    plt.ylim((0.5, 2.75))
+    ax = plt.gca()
+    # no line in right and top border
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
     plt.savefig("./data/adjust_factor_in_testing.png")
 
 if __name__ == "__main__":
