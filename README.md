@@ -17,6 +17,7 @@ The return is annualized and the risk is the variance of return in every day.
 So I get the return and risk for all funds as below.
 The last day I analyze is Dec 2nd, 2020, some results are based on this day.
 ```
+python analyzeFundData.py analyzeHistoricalValue --ifUseAdjustFactorToLatestDay=False
 ```
 
 ![risk_return_noWatchlist_useNewIssues_notUseAdjustFactor](image/risk_return_noWatchlist_useNewIssues_notUseAdjustFactor.png)
@@ -27,7 +28,7 @@ So when we exclude those funds less than 3 years, the maximum annualized return 
 ```
 ```
 
-![risk_return_noWatchlist_notAddAdjustedFund](image/risk_return_noWatchlist_notAddAdjustedFund.png)
+![risk_return_noWatchlist_notUseNewIssues_notUseAdjustFactor](image/risk_return_noWatchlist_notUseNewIssues_notUseAdjustFactor.png)
 
 But it's not smart to exclude those funds simply, in those days I will find a way to adjust the return and risk of those funds so we can compare all funds in same range.
 
@@ -66,7 +67,7 @@ As there are a lot difficulties to estimate the value by count the historical pr
 
 This can be verified by the correlation of two funds' net value. For example we can use Pearson's correlation method to get the correlation between fund '110011' and other funds.
 ```
-python analyzeFundData.py getCorrelationMatrixForOneFund
+python analyzeFundData.py getCorrelationMatrixForOneFund --ifGetCorrFromFile=False --ifGetDfMergeFromFile=False
 ```
 
 ![correlation_110011](image/correlation_110011.png)
