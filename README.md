@@ -5,6 +5,9 @@ The fund is the portfolio of stocks and other assets, we can analyze the relatio
 git clone https://github.com/wangershi/analyzeChineseFund.git
 ```
 
+## data prepare
+If you want to crawl the data by yourself, please refer [dataPrepare](doc/dataPrepare.md) to find the solutions.
+
 ## compare all funds in same time range is not a easy job
 I want to get the return and risk in 3 years for all funds.
 

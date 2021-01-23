@@ -4,7 +4,12 @@ import re
 import datetime
 import os
 import pandas
-from util import user_agent_list, referer_list
+import configparser
+
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+
+from src.utils.util import user_agent_list, referer_list
 
 '''
 The crawl code from https://github.com/shengqiangzhang/examples-of-web-crawlers
@@ -16,7 +21,17 @@ def get_fund_code(forceCrawl=False):
         Args:
             forceCrawl: force crawl all funds
     '''
-    pathToday = "data/latestFundCode/fund_code_%s.csv" % datetime.datetime.now().strftime("%Y%m%d")
+    # read config file
+    cf = configparser.ConfigParser()
+    cf.read("config/config.ini")
+
+    folderOfLatestFundCode = cf.get("Data-Crawler", "folderOfLatestFundCode")
+    if not os.path.exists(folderOfLatestFundCode):
+        os.mkdir(folderOfLatestFundCode)
+
+    # store latest fund code every day
+    updateEveryDay = cf.get("Data-Crawler-Frequency", "updateEveryDay")
+    pathToday = os.path.join(folderOfLatestFundCode, "fund_code_%s.csv" % datetime.datetime.now().strftime(updateEveryDay))
     if (not os.path.exists(pathToday) or forceCrawl):
         # 获取一个随机user_agent和Referer
         header = {'User-Agent': random.choice(user_agent_list),
