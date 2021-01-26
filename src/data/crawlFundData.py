@@ -22,6 +22,9 @@ def crawRisk(fundCode):
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
 
+    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
+
     # the folder to save the original risk
     folderOfOriginalRisk = cf.get("Data-Crawler", "folderOfOriginalRisk")
     if not os.path.exists(folderOfOriginalRisk):
@@ -47,7 +50,6 @@ def crawRisk(fundCode):
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
-            # TODO: use proxy to visit the website
             website = "http://fund.eastmoney.com/%s.html" % fundCode
             #print ("website = %s" % website)    # http://fund.eastmoney.com/110011.html
             req = requests.get(website, timeout=3, headers=header)
@@ -59,7 +61,7 @@ def crawRisk(fundCode):
                 fw.write(data)
 
             # sleep for some time
-            time.sleep(random.randint(3, 6))
+            time.sleep(random.randint(minSecondsToWaitCrawler, maxSecondsToWaitCrawler))
         except Exception as e:
             print(str(e))
     
@@ -87,6 +89,9 @@ def crawlStock(fundCode):
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
+    
+    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
 
     # the folder to save the original risk
     folderOfOriginalCcmx = cf.get("Data-Crawler", "folderOfOriginalCcmx")
@@ -113,9 +118,7 @@ def crawlStock(fundCode):
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
-            # TODO: use proxy to visit the website
             # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=110011&topline=100&year=&month=&rt=0.9688781140527483
-            # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=000001&topline=10&year=&month=&rt=0.16432760653431278
             website = "http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=%s&topline=100&year=&month=&rt=0.9688781140527483" % fundCode
             req = requests.get(website, timeout=3, headers=header)
 
@@ -127,7 +130,7 @@ def crawlStock(fundCode):
                 fw.write(data)
 
             # sleep for some time
-            time.sleep(random.randint(3, 6))
+            time.sleep(random.randint(minSecondsToWaitCrawler, maxSecondsToWaitCrawler))
         except Exception as e:
             print(str(e))
 
@@ -165,6 +168,9 @@ def crawlBond(fundCode):
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
+    
+    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
 
     # the folder to save the original risk
     folderOfOriginalBond = cf.get("Data-Crawler", "folderOfOriginalBond")
@@ -191,7 +197,6 @@ def crawlBond(fundCode):
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
-            # TODO: use proxy to visit the website
             # http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=zqcc&code=110011&year=&rt=0.7806009533509729
             website = "http://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=zqcc&code=%s&year=&rt=0.7806009533509729" % fundCode
             req = requests.get(website, timeout=3, headers=header)
@@ -204,7 +209,7 @@ def crawlBond(fundCode):
                 fw.write(data)
 
             # sleep for some time
-            time.sleep(random.randint(3, 6))
+            time.sleep(random.randint(minSecondsToWaitCrawler, maxSecondsToWaitCrawler))
         except Exception as e:
             print(str(e))
 
@@ -250,6 +255,9 @@ def crawlAssetsAllocation(fundCode):
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
+    
+    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
 
     # the folder to save the original risk
     folderOfOriginalAssetsAllocation = cf.get("Data-Crawler", "folderOfOriginalAssetsAllocation")
@@ -276,7 +284,6 @@ def crawlAssetsAllocation(fundCode):
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
-            # TODO: use proxy to visit the website
             # http://fundf10.eastmoney.com/zcpz_110011.html
             website = "http://fundf10.eastmoney.com/zcpz_%s.html" % fundCode
             req = requests.get(website, timeout=3, headers=header)
@@ -289,7 +296,7 @@ def crawlAssetsAllocation(fundCode):
                 fw.write(data)
 
             # sleep for some time
-            time.sleep(random.randint(3, 6))
+            time.sleep(random.randint(minSecondsToWaitCrawler, maxSecondsToWaitCrawler))
         except Exception as e:
             print(str(e))
 
@@ -332,6 +339,9 @@ def crawHistoricalValue(fundCode):
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
+    
+    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
 
     # number of historical days to crawl
     numberOfHistoricalDaysToCrawl = cf.get("Data-Crawler-Frequency", "numberOfHistoricalDaysToCrawl")
@@ -362,7 +372,6 @@ def crawHistoricalValue(fundCode):
         # 使用try、except来捕获异常
         # 如果不捕获异常，程序可能崩溃
         try:
-            # TODO: use proxy to visit the website
             # TODO: get the website automatically
             # this websit would change every day and we must modify it manually
             # manually setting : open http://fundf10.eastmoney.com/jjjz_110011.html in your browser, then press F12, you can find similar link in Sources/api.fund.eastmoney.com/f10
@@ -377,7 +386,7 @@ def crawHistoricalValue(fundCode):
                 fw.write(data)
 
             # sleep for some time
-            time.sleep(random.randint(3, 6))
+            time.sleep(random.randint(minSecondsToWaitCrawler, maxSecondsToWaitCrawler))
         except Exception as e:
             print(str(e))
     
@@ -467,6 +476,7 @@ def crawlAllFundData(ifCrawlBasicInformation=True, ifCrawlPortfolio=True, ifCraw
             fw.write(headerOfFundInformation)
 
     count = 0
+    # Please don't use multi processing and proxy to burden the server!!!
     for item in fund_code_list:
         fundCode = item[0]
         fundName = item[2]
