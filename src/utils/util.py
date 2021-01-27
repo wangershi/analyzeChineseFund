@@ -1,3 +1,4 @@
+import os
 
 # user_agent列表
 user_agent_list = [
@@ -79,3 +80,13 @@ class FundInformation:
 			returnStr += "%s," % self.__dict__[key]
 
 		return returnStr[:-1] + "\n"
+
+def getLatestFile(folder):
+	'''
+		example: return "fundInformation_202102.csv" when the folder contains 3 files,
+		"fundInformation_202101.csv", "fundInformation_202102.csv", "fundInformation_202012.csv"
+	'''
+	dictOfDate = {}
+	for item in os.listdir(folder):
+		dictOfDate[item] = int(item.split(".")[0].split("_")[-1])
+	return sorted(dictOfDate.items(), key=lambda d:d[1], reverse=True)[0][0]
