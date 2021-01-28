@@ -16,16 +16,20 @@ gc.enable()
 
 def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
     if ifPrint:
-        print('Loading data...')    
+        print('Loading data...')
+
+    # the file don't exist, so it's mandatory to generate the file
+    if ifLoadDatasetFromFile:
+        if not os.path.exists('data/xSparseForTrainDataset.npz') or not os.path.exists("data/yForTrainDataset.csv"):
+            ifLoadDatasetFromFile = False
 
     if not ifLoadDatasetFromFile:
         # create the dataset
         folderOfTrainDataset = "data/trainDataset"
         count = 0
         for file in os.listdir(folderOfTrainDataset):
-            if count >= 100000:
-                break
-            print ("count = %s\tfile=%s" % (count, file))
+            if count % 100 == 0:
+                print ("count = %s\tfile=%s" % (count, file))
 
             filePath = os.path.join(folderOfTrainDataset, file)
             dfSingle = pd.read_csv(filePath, index_col=0).T.fillna(0)
@@ -74,9 +78,6 @@ def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
     trainIndice = indice[:trainValSplitNumber]
     evaluateIndice = indice[trainValSplitNumber:valTestSplitNumber]
     testIndice = indice[valTestSplitNumber:]
-    #print ("trainIndice = %s" % trainIndice)
-    #print ("evaluateIndice = %s" % evaluateIndice)
-    #print ("testIndice = %s" % testIndice)
     #print ("len(trainIndice) = %s" % len(trainIndice))  # 2611130
     #print ("len(evaluateIndice) = %s" % len(evaluateIndice))    # 326391
     #print ("len(testIndice) = %s" % len(testIndice))    # 326392
@@ -102,6 +103,7 @@ def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
 
     return xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest
 
+
 def objective(trial):
     xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest = loadDataset(ifPrint=False)
 
@@ -110,21 +112,6 @@ def objective(trial):
     lgbEval = lgb.Dataset(xEvaluate, yEvaluate, reference=lgbTrain)
 
     # specify the configurations as a dict
-    '''
-    params = {
-        'boosting_type': 'gbdt',
-        'objective': 'regression',
-        'metric': {'l2', 'l1'},
-        'num_threads': 4,   # real CPU cores in Surface Book 2, modify this in other machine
-        'num_leaves': trial.suggest_int("num_leaves", 2, 2**12-1),
-        'learning_rate': trial.suggest_float("learning_rate", 0.01, 1.0),
-        'feature_fraction': trial.suggest_float("feature_fraction", 0.4, 1.0),
-        'bagging_fraction': trial.suggest_float("bagging_fraction", 0.4, 1.0),
-        'bagging_freq': trial.suggest_int("bagging_freq", 1, 10),
-        'verbose': 0,
-        'min_data_in_leaf': trial.suggest_int("min_data_in_leaf", 10, 1000)
-    }
-    '''
     params = {
         'boosting_type': 'gbdt',
         'objective': 'regression',
@@ -140,13 +127,6 @@ def objective(trial):
     }
 
     # train
-    '''
-    gbm = lgb.train(params,
-                    lgbTrain,
-                    num_boost_round=trial.suggest_int("num_boost_round", 10, 1000),
-                    valid_sets=lgbEval,
-                    early_stopping_rounds=trial.suggest_int("early_stopping_rounds", 1, 100))
-    '''
     gbm = lgb.train(params,
                     lgbTrain,
                     num_boost_round=20,  # already fine tune
@@ -157,6 +137,7 @@ def objective(trial):
     yPred = gbm.predict(xTest)
     # eval
     return mean_squared_error(yTest, yPred) ** 0.5
+
 
 def autoFineTune():
     study = optuna.create_study(direction="maximize")
@@ -172,6 +153,7 @@ def autoFineTune():
     print("  Params: ")
     for key, value in trial.params.items():
         print("    {}: {}".format(key, value))
+
 
 def trainModel():
     xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest = loadDataset()
@@ -209,31 +191,32 @@ def trainModel():
 
     print('Starting predicting...')
     # predict
-    yPred = gbm.predict(xEvaluate, num_iteration=gbm.best_iteration)
+    yPred = gbm.predict(xTest, num_iteration=gbm.best_iteration)
     print (yPred[:10])
     # eval
-    print('The rmse of prediction is:', mean_squared_error(yEvaluate, yPred) ** 0.5)
+    print('The rmse of prediction is:', mean_squared_error(yTest, yPred) ** 0.5)
 
-def testModel():
+
+def testModel(ifLoadDatasetFromFile = True):
     print('Loading data...')
 
-    ifLoadDatasetFromFile = True
+    # the file don't exist, so it's mandatory to generate the file
+    if ifLoadDatasetFromFile:
+        if not os.path.exists("data/dfTest.csv"):
+            ifLoadDatasetFromFile = False
 
     if not ifLoadDatasetFromFile:
         # create the dataset
         folderOfTestDataset = "data/testDataset"
         count = 0
         for file in os.listdir(folderOfTestDataset):
-            if count >= 1000000:
-                break
-            print ("count = %s\tfile=%s" % (count, file))
+            if count % 100 == 0:
+                print ("count = %s\tfile=%s" % (count, file))
 
             filePath = os.path.join(folderOfTestDataset, file)
             dfSingle = pd.read_csv(filePath, index_col=0)
-            #dfSingle.rename(columns={"Unnamed: 0":"FundCode"}, inplace=True)
             dfSingle.reset_index(drop=True, inplace=True)
             dfSingle = dfSingle.T.fillna(0)
-            #print (dfSingle)
 
             if count == 0:
                 dfTest = dfSingle
@@ -243,36 +226,30 @@ def testModel():
             count += 1
 
         print ("count = %s" % count)
-        #dfTest.reset_index(drop=True, inplace=True)
 
         # save df
         dfTest.to_csv("data/dfTest.csv")
-    else:
-        dfTest = pd.read_csv("data/dfTest.csv", dtype={'Unnamed: 0':object})
-        dfTest.set_index(['Unnamed: 0'], inplace=True)
+        
+    dfTest = pd.read_csv("data/dfTest.csv", dtype={'Unnamed: 0':object})
+    dfTest.set_index(['Unnamed: 0'], inplace=True)
 
     print ("dfTest = \n%s" % dfTest)
 
     # load model to predict
     bst = lgb.Booster(model_file='model/model.txt')
-    # can only predict with the best iteration (or the saving iteration)
     yPred = bst.predict(dfTest)
-    print ("yPred = %s" % yPred)
-    print ("yPred.shape = %s" % yPred.shape)
-    #print ("type(yPred) = %s" % type(yPred))    # <class 'numpy.ndarray'>
-
-    dfTest["adjustFactorToLatestDay"] = yPred
-    dfAdjustFactorToLatestDay = dfTest[["adjustFactorToLatestDay"]].T
-    print ("dfAdjustFactorToLatestDay = %s" % dfAdjustFactorToLatestDay)
-    dfAdjustFactorToLatestDay.to_csv("data/dfAdjustFactorToLatestDay.csv")
 
     dfTest["yPred"] = yPred
-    print ("dfTest = %s" % dfTest)
+    dfAdjustFactorToLatestDay = dfTest[["yPred"]].T
+    dfAdjustFactorToLatestDay.to_csv("data/dfAdjustFactorToLatestDay.csv")
 
+    print ("dfAdjustFactorToLatestDay = \n%s" % dfAdjustFactorToLatestDay)
+
+    xMax = dfTest.shape[1] - 2  # 8812
     try:
-        dfTest.plot.scatter(x='9573', y='yPred', c='k')
+        dfTest.plot.scatter(x=str(xMax), y='yPred', c='k')
     except:
-        dfTest.plot.scatter(x=9573, y='yPred', c='k')
+        dfTest.plot.scatter(x=xMax, y='yPred', c='k')
     plt.xlabel("Count of trading days")
     plt.ylabel("Adjusted factor to latest day")
     plt.xlim((0, 800))
@@ -281,7 +258,8 @@ def testModel():
     # no line in right and top border
     ax.spines['right'].set_color('none')
     ax.spines['top'].set_color('none')
-    plt.savefig("./data/adjust_factor_in_testing.png")
+    plt.savefig("./image/adjust_factor_in_testing.png")
+
 
 if __name__ == "__main__":
     fire.Fire()
