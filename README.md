@@ -1,5 +1,9 @@
 # analyzeChineseFund
 
+## about this project
+This project is a homework when I study in the AI School 2020, Microsoft, you can find the paper in [Method to Compare Two Funds Issued Before and After Stock Crash](doc/main.pdf), the idea is to elimate the influence by the fluctuation in overall stock market, for example, funds issued in May 2020 gain a lot just because the bull market, it troubles us when we compare it to some old issues. 
+![Annualized_return_and_risk.png](image/Annualized_return_and_risk.png)
+
 ## clone this project
 ```
 git clone https://github.com/wangershi/analyzeChineseFund.git
