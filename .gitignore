@@ -22,7 +22,6 @@ var/
 wheels/
 pip-wheel-metadata/
 share/python-wheels/
-data/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -130,3 +129,4 @@ dmypy.json
 .pyre/
 
 model/
+data/*
