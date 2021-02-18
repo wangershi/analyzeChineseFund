@@ -9,10 +9,10 @@ import fire
 import configparser
 
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 
-from src.utils.util import user_agent_list, referer_list, FundInformation, FundElement, parseStringIntoNumber, FundHistoricalValue
-from getLatestFund import get_fund_code
+from src.util import user_agent_list, referer_list, FundInformation, FundElement, parseStringIntoNumber, FundHistoricalValue
+from src.getLatestFund import get_fund_code
 
 
 def crawRisk(fundCode):

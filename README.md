@@ -13,7 +13,7 @@ git clone https://github.com/wangershi/analyzeChineseFund.git
 
 Use below commands to crawl the data.
 ```
-python src/data/crawlFundData.py crawlAllFundData
+python src/crawlFundData.py crawlAllFundData
 ```
 
 Prepare data to train
