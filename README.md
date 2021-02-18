@@ -24,7 +24,7 @@ python src/crawlFundData.py crawlAllFundData --ifCrawlBasicInformation=True --if
 
 Prepare data to train
 ```
-python src/data/prepareDataset.py prepareTrainDataset
+python src/prepareDataset.py prepareTrainDataset
 ```
 
 To find more details, please refer to [dataPrepare](doc/dataPrepare.md).
