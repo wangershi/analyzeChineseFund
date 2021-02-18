@@ -22,7 +22,7 @@ Use below commands to crawl the data.
 python src/crawlFundData.py crawlAllFundData --ifCrawlBasicInformation=True --ifCrawlPortfolio=True --ifCrawlHistoricalValue=True
 ```
 
-Prepare data to train
+Prepare data to train.
 ```
 python src/prepareDataset.py prepareTrainDataset
 ```
