@@ -9,11 +9,17 @@ This project is a homework when I study in the AI School 2020, Microsoft, you ca
 git clone https://github.com/wangershi/analyzeChineseFund.git
 ```
 
+## install related packages
+You should run the scripts in Python3 and install below packages.
+```
+pip install -r .\requirements.txt
+```
+
 ## data prepare
 
 Use below commands to crawl the data.
 ```
-python src/crawlFundData.py crawlAllFundData
+python src/crawlFundData.py crawlAllFundData --ifCrawlBasicInformation=True --ifCrawlPortfolio=True --ifCrawlHistoricalValue=True
 ```
 
 Prepare data to train
