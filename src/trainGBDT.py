@@ -8,11 +8,100 @@ import random
 from scipy import sparse
 import numpy as np
 import optuna
+import configparser
+import datetime
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
 import gc
 gc.enable()
+
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+
+from src.util import getFolderNameInConfig
+from src.analyzeData import getSparseMatrixForPortfolioInAllFunds, getHistoricalValue
+
+def prepareTrainDataset(ifSavePortfolioIndex=False):
+    # read config file
+    cf = configparser.ConfigParser()
+    cf.read("config/config.ini")
+    daysRangeInOneYear = int(cf.get("Parameter", "daysRangeInOneYear"))
+    numberOfYears = int(cf.get("Parameter", "numberOfYears"))
+    daysRange = daysRangeInOneYear * numberOfYears  # 756
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
+    folderOfDayInStandard = getFolderNameInConfig("folderOfDayInStandard")    # the folder of data which day is standard
+    
+    pathOfDfSparsePortfolio = cf.get("Analyze", "pathOfDfSparsePortfolio")
+    if not os.path.exists(pathOfDfSparsePortfolio):
+        getSparseMatrixForPortfolioInAllFunds()
+    
+    # didn't generate dayInStandard before
+    if len(os.listdir(folderOfDayInStandard)) <= 0:
+        getHistoricalValue()
+
+    dfSparsePortfolio = pd.read_csv(pathOfDfSparsePortfolio, index_col=0)
+    header = dfSparsePortfolio.columns[1:].to_list()
+    
+    if ifSavePortfolioIndex:
+        dfPortfolioIndex = dfSparsePortfolio["FullElements"]
+        dfPortfolioIndex.to_csv("data/dfPortfolioIndex.csv")
+
+    folderToSaveTrainDataset = getFolderNameInConfig("folderToSaveTrainDataset")    # the folder to save train dataset
+    folderToSaveTestDataset = getFolderNameInConfig("folderToSaveTestDataset")    # the folder to save test dataset
+
+    month = "%s" % datetime.datetime.now().strftime(updateEveryMonth)   # 202101
+    count = 0
+    for fundCode in header:
+        if count % 100 == 0:
+            print ("count = %s\tfundCode=%s" % (count, fundCode))
+
+        pathFund = os.path.join(folderOfDayInStandard, "%s_%s.csv" % (fundCode, month))
+        if not os.path.exists(pathFund):
+            continue
+        dfFund = pd.read_csv(pathFund, index_col=0)
+
+        maxDayInStandard = dfFund["DayInStandard"].max()    # 755
+        # get train dataset which found more than 3 years
+        if (maxDayInStandard >= (daysRange - 1)):
+            # must have value in latest day
+            if (dfFund["DayInStandard"].min() != 0):
+                continue
+
+            # get the earliest value
+            earliestDayForFund = dfFund[dfFund["DayInStandard"] == (daysRange - 1)] # 1.3769999999999998
+            valueInEarliestDay = earliestDayForFund.iloc[0]["AccumulativeNetAssetValue"]    # 1.4696
+
+            # count the adjust factor, we can get the value in 3 years by adjustFactorToLatestDay * (value[0]/value[day])
+            dfFund["adjustFactorToLatestDay"] =  dfFund["AccumulativeNetAssetValue"] / valueInEarliestDay
+            dfFund = dfFund[["DayInStandard", "adjustFactorToLatestDay"]]
+
+            # abandon the latest day, it's meaningless
+            dfFund.reset_index(drop=True, inplace=True)
+            dfFund = dfFund.T.drop(labels=0, axis=1).T
+            # reset index to concat with dfSparsePortfolioForThisFund
+            dfFund.reset_index(drop=True, inplace=True)
+            dfFund = dfFund.T
+
+            # duplicate to concat with dfSparsePortfolioForThisFund
+            dfSparsePortfolioForThisFund = pd.concat([dfSparsePortfolio[[fundCode]].T]*dfFund.shape[1])
+            # reset index to concat with dfSparsePortfolioForThisFund
+            dfSparsePortfolioForThisFund = dfSparsePortfolioForThisFund.reset_index(drop=True).T
+
+            dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfFund], axis=0)
+            dfDataset.to_csv(os.path.join(folderToSaveTrainDataset, "%s.csv" % fundCode))
+        else:
+            dfInLatestDay = dfFund[dfFund["DayInStandard"] == maxDayInStandard]
+
+            dfInLatestDay[fundCode] = dfInLatestDay["DayInStandard"]
+            dfInLatestDay = dfInLatestDay[[fundCode]]
+
+            dfSparsePortfolioForThisFund = dfSparsePortfolio[[fundCode]]
+
+            dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfInLatestDay], axis=0)
+            dfDataset.to_csv(os.path.join(folderToSaveTestDataset, "%s.csv" % fundCode))
+
+        count += 1
 
 def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
     if ifPrint:
@@ -200,6 +289,10 @@ def trainModel():
 def testModel(ifLoadDatasetFromFile = True):
     print('Loading data...')
 
+    # read config file
+    cf = configparser.ConfigParser()
+    cf.read("config/config.ini")
+
     # the file don't exist, so it's mandatory to generate the file
     if ifLoadDatasetFromFile:
         if not os.path.exists("data/dfTest.csv"):
@@ -241,7 +334,7 @@ def testModel(ifLoadDatasetFromFile = True):
 
     dfTest["yPred"] = yPred
     dfAdjustFactorToLatestDay = dfTest[["yPred"]].T
-    dfAdjustFactorToLatestDay.to_csv("data/dfAdjustFactorToLatestDay.csv")
+    dfAdjustFactorToLatestDay.to_csv(cf.get("Analyze", "pathOfDfAdjustFactorToLatestDay"))
 
     print ("dfAdjustFactorToLatestDay = \n%s" % dfAdjustFactorToLatestDay)
 

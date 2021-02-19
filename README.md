@@ -24,7 +24,7 @@ python src/crawlFundData.py crawlAllFundData --ifCrawlBasicInformation=True --if
 
 Prepare data to train.
 ```
-python src/prepareDataset.py prepareTrainDataset
+python src/trainGBDT.py prepareTrainDataset
 ```
 
 To find more details, please refer to [dataPrepare](doc/dataPrepare.md).
@@ -51,7 +51,7 @@ python src/train/trainGBDT.py autoFineTune
 
 After we get the adjusted factor, we can evaluate it again.
 ```
-python src/data/analyzeData.py getAverageSlopeForFundsInSameRange --ifUseAdjustFactorToLatestDay=True
+python src/analyzeData.py getAverageSlopeForFundsInSameRange --ifUseAdjustFactorToLatestDay=True
 ```
 
 The model flatten the distribution of average return.
@@ -61,6 +61,6 @@ The standard deviation of average return drop from 0.0520 to 0.0175.
 
 Besides, we can get the  return and risk after adjusted.
 ```
-python src/data/analyzeData.py analyzeHistoricalValue --ifUseNewIssues=True --ifUseOldIssues=True --ifUseWatchList=False --ifUseAdjustFactorToLatestDay=True --ifPrintFundCode=False
+python src/analyzeData.py analyzeHistoricalValue --ifUseNewIssues=True --ifUseOldIssues=True --ifUseWatchList=False --ifUseAdjustFactorToLatestDay=True --ifPrintFundCode=False
 ```
 ![risk_return_noWatchlist_useNewIssues_useOldIssues_useAdjustFactor](image/risk_return_noWatchlist_useNewIssues_useOldIssues_useAdjustFactor.png)

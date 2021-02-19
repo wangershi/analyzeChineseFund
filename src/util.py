@@ -101,11 +101,11 @@ def getFolderNameInConfig(subFolder):
     cf.read("config/config.ini")
 
     # root folder of data
-    rootFolderOfData = cf.get("Data-Crawler", "rootFolderOfData")
+    rootFolderOfData = cf.get("Data", "rootFolderOfData")
     if not os.path.exists(rootFolderOfData):
         os.mkdir(rootFolderOfData)
 
-    folderOfSubFolder = os.path.join(rootFolderOfData, cf.get("Data-Crawler", subFolder))
+    folderOfSubFolder = os.path.join(rootFolderOfData, cf.get("Data", subFolder))
     if not os.path.exists(folderOfSubFolder):
         os.mkdir(folderOfSubFolder)
 

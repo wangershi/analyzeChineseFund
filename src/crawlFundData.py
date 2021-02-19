@@ -23,13 +23,13 @@ def crawRisk(fundCode):
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
 
-    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
-    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
+    minSecondsToWaitCrawler = int(cf.get("Parameter", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Parameter", "maxSecondsToWaitCrawler"))
 
     folderOfOriginalRisk = getFolderNameInConfig("folderOfOriginalRisk")    # the folder to save the original risk
 
     # update every month, not every day
-    updateEveryMonth = cf.get("Data-Crawler-Frequency", "updateEveryMonth")
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
     nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime(updateEveryMonth))
     pathOfPage = os.path.join(folderOfOriginalRisk, nameOfPage)
 
@@ -81,13 +81,13 @@ def crawlStockPortfolio(fundCode):
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
     
-    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
-    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
+    minSecondsToWaitCrawler = int(cf.get("Parameter", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Parameter", "maxSecondsToWaitCrawler"))
 
     folderOfOriginalCcmx = getFolderNameInConfig("folderOfOriginalCcmx")    # the folder to save the original stock portfolio
 
     # update every month, not every day
-    updateEveryMonth = cf.get("Data-Crawler-Frequency", "updateEveryMonth")
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
     nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime(updateEveryMonth))
     pathOfPage = os.path.join(folderOfOriginalCcmx, nameOfPage)
 
@@ -151,13 +151,13 @@ def crawlBondPortfolio(fundCode):
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
     
-    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
-    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
+    minSecondsToWaitCrawler = int(cf.get("Parameter", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Parameter", "maxSecondsToWaitCrawler"))
 
     folderOfOriginalBond = getFolderNameInConfig("folderOfOriginalBond")    # the folder to save the original bond portfolio
 
     # update every month, not every day
-    updateEveryMonth = cf.get("Data-Crawler-Frequency", "updateEveryMonth")
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
     nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime(updateEveryMonth))
     pathOfPage = os.path.join(folderOfOriginalBond, nameOfPage)
 
@@ -229,13 +229,13 @@ def crawlAssetsAllocation(fundCode):
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
     
-    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
-    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
+    minSecondsToWaitCrawler = int(cf.get("Parameter", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Parameter", "maxSecondsToWaitCrawler"))
 
     folderOfOriginalAssetsAllocation = getFolderNameInConfig("folderOfOriginalAssetsAllocation")    # the folder to save the original assets allocation
 
     # update every month, not every day
-    updateEveryMonth = cf.get("Data-Crawler-Frequency", "updateEveryMonth")
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
     nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime(updateEveryMonth))
     pathOfPage = os.path.join(folderOfOriginalAssetsAllocation, nameOfPage)
 
@@ -303,17 +303,17 @@ def crawHistoricalValue(fundCode):
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
     
-    minSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "minSecondsToWaitCrawler"))
-    maxSecondsToWaitCrawler = int(cf.get("Data-Crawler-Frequency", "maxSecondsToWaitCrawler"))
+    minSecondsToWaitCrawler = int(cf.get("Parameter", "minSecondsToWaitCrawler"))
+    maxSecondsToWaitCrawler = int(cf.get("Parameter", "maxSecondsToWaitCrawler"))
 
     # number of historical days to crawl
-    numberOfHistoricalDaysToCrawl = cf.get("Data-Crawler-Frequency", "numberOfHistoricalDaysToCrawl")   # 3000
+    numberOfHistoricalDaysToCrawl = cf.get("Parameter", "numberOfHistoricalDaysToCrawl")   # 3000
 
     folderOfOriginalHistoricalValue = getFolderNameInConfig("folderOfOriginalHistoricalValue")    # the folder to save the original historical value
     folderToSaveHistoricalValue = getFolderNameInConfig("folderToSaveHistoricalValue")    # the folder to save historical value
 
     # update every month, not every day
-    updateEveryMonth = cf.get("Data-Crawler-Frequency", "updateEveryMonth")
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
     nameOfPage = "%s_%s.html" % (fundCode, datetime.datetime.now().strftime(updateEveryMonth))
     pathOfPage = os.path.join(folderOfOriginalHistoricalValue, nameOfPage)
 
@@ -364,7 +364,7 @@ def crawHistoricalValue(fundCode):
                 fundHistoricalValue = FundHistoricalValue(date, netAssetValue, accumulativeNetAssetValue, dividends)
                 listOfFundHistoricalValue.append(fundHistoricalValue)
         except Exception as e:
-            print ("fundCode=%s\tdata = %s\terror=%s" % (fundCode, data, str(e)))
+            print ("fundCode=%s\terror=%s" % (fundCode, str(e)))
 
     if len(listOfFundHistoricalValue):
         headerOfFundHistoricalValue = ""
@@ -391,7 +391,7 @@ def get_fund_code(forceCrawl=False):
     cf.read("config/config.ini")
     
     folderOfLatestFundCode = getFolderNameInConfig("folderOfLatestFundCode")  # the folder to save latest fund code
-    updateEveryDay = cf.get("Data-Crawler-Frequency", "updateEveryDay") # store latest fund code every day
+    updateEveryDay = cf.get("Parameter", "updateEveryDay") # store latest fund code every day
     pathToday = os.path.join(folderOfLatestFundCode, "fundCode_%s.csv" % datetime.datetime.now().strftime(updateEveryDay))
     if (not os.path.exists(pathToday) or forceCrawl):
         header = {'User-Agent': random.choice(user_agent_list), 'Referer': random.choice(referer_list)}
@@ -419,7 +419,7 @@ def crawlAllFundData(ifCrawlBasicInformation=True, ifCrawlPortfolio=True, ifCraw
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
 
-    updateEveryMonth = cf.get("Data-Crawler-Frequency", "updateEveryMonth") # update every month, not every day
+    updateEveryMonth = cf.get("Parameter", "updateEveryMonth") # update every month, not every day
     folderOfFundInformation = getFolderNameInConfig("folderOfFundInformation")  # the folder to save the fund information
     folderOfPortfolio = getFolderNameInConfig("folderOfPortfolio")  # the folder to save the portfolio
 
