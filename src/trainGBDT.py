@@ -23,6 +23,8 @@ from src.util import getFolderNameInConfig
 from src.analyzeData import getSparseMatrixForPortfolioInAllFunds, getHistoricalValue
 
 def prepareTrainDataset(ifSavePortfolioIndex=False):
+    print ("------------------------ Begin to prepare train dataset... ------------------------")
+
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
@@ -103,9 +105,13 @@ def prepareTrainDataset(ifSavePortfolioIndex=False):
 
         count += 1
 
-def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
-    if ifPrint:
-        print('Loading data...')
+    print ("------------------------ Done. ------------------------")
+
+def loadDataset(ifLoadDatasetFromFile=True, ratioOfTrainInWholeDataset=0.8, ratioOfTrainValInWholeDataset=0.9):
+    '''
+        train:val:test=8:1:1 if we set ratioOfTrainInWholeDataset be 0.8 and ratioOfTrainValInWholeDataset be 0.9
+    '''
+    print ("------------------------ Loading data... ------------------------")
 
     # the file don't exist, so it's mandatory to generate the file
     if ifLoadDatasetFromFile:
@@ -115,6 +121,11 @@ def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
     if not ifLoadDatasetFromFile:
         # create the dataset
         folderOfTrainDataset = "data/trainDataset"
+
+        # didn't generate dataset before
+        if len(os.listdir(folderOfTrainDataset)) <= 0:
+            prepareTrainDataset()
+
         count = 0
         for file in os.listdir(folderOfTrainDataset):
             if count % 100 == 0:
@@ -147,54 +158,36 @@ def loadDataset(ifPrint=True, ifLoadDatasetFromFile = True):
         sparse.save_npz('data/xSparseForTrainDataset.npz', xSparseForTrainDataset)
         yForTrainDataset.to_csv("data/yForTrainDataset.csv")
     else:
-        xSparseForTrainDataset = sparse.load_npz('data/xSparseForTrainDataset.npz')
+        xSparseForTrainDataset = sparse.load_npz('data/xSparseForTrainDataset.npz') # xSparseForTrainDataset.shape = (2958, 9574)
         yForTrainDataset = pd.read_csv("data/yForTrainDataset.csv", index_col=0)
-        yForTrainDataset = yForTrainDataset["adjustFactorToLatestDay"]
-
-    if ifPrint:
-        print (xSparseForTrainDataset.shape)    # (2958, 9574)
-        print (yForTrainDataset.shape)    # (2958,)
+        yForTrainDataset = yForTrainDataset["adjustFactorToLatestDay"]  # yForTrainDataset.shape = (2958,)
 
     # split the dataset as train dataset and evaluate dataset
-    # train:val:test=8:1:1 if we set ratioOfTrainInWholeDataset be 0.8 and ratioOfTrainValInWholeDataset be 0.9
-    ratioOfTrainInWholeDataset = 0.8
-    ratioOfTrainValInWholeDataset = 0.9
     lenOfDataset = xSparseForTrainDataset.shape[0]
     trainValSplitNumber = int(lenOfDataset * ratioOfTrainInWholeDataset)
     valTestSplitNumber = int(lenOfDataset * ratioOfTrainValInWholeDataset)
     indice = np.arange(lenOfDataset)
     np.random.shuffle(indice)
-    trainIndice = indice[:trainValSplitNumber]
-    evaluateIndice = indice[trainValSplitNumber:valTestSplitNumber]
-    testIndice = indice[valTestSplitNumber:]
-    #print ("len(trainIndice) = %s" % len(trainIndice))  # 2611130
-    #print ("len(evaluateIndice) = %s" % len(evaluateIndice))    # 326391
-    #print ("len(testIndice) = %s" % len(testIndice))    # 326392
+    trainIndice = indice[:trainValSplitNumber]  # len(trainIndice) = 2611130
+    evaluateIndice = indice[trainValSplitNumber:valTestSplitNumber] # len(evaluateIndice) = 326391
+    testIndice = indice[valTestSplitNumber:]    # len(testIndice) = 326392
 
-    if ifPrint:
-        print ("for train dataset...")
-    xTrain = xSparseForTrainDataset[trainIndice]
-    yTrain = yForTrainDataset[trainIndice]
+    xTrain = xSparseForTrainDataset[trainIndice]    # xTrain.shape = (2366, 9574)
+    yTrain = yForTrainDataset[trainIndice]  # yTrain.shape = (2366,)
 
-    xEvaluate = xSparseForTrainDataset[evaluateIndice]
-    yEvaluate = yForTrainDataset[evaluateIndice]
+    xEvaluate = xSparseForTrainDataset[evaluateIndice]  # xEvaluate.shape = (592, 9574)
+    yEvaluate = yForTrainDataset[evaluateIndice]    # yEvaluate.shape = (592,)
 
-    xTest = xSparseForTrainDataset[testIndice]
-    yTest = yForTrainDataset[testIndice]
+    xTest = xSparseForTrainDataset[testIndice]  # xTest.shape = (592, 9574)
+    yTest = yForTrainDataset[testIndice]    # yTest.shape = (592,)
 
-    if ifPrint:
-        print (xTrain.shape)    # (2366, 9574)
-        print (yTrain.shape)    # (2366,)
-        print (xEvaluate.shape)    # (592, 9574)
-        print (yEvaluate.shape)    # (592,)
-        print (xTest.shape)    # (592, 9574)
-        print (yTest.shape)    # (592,)
+    print ("------------------------ Done. ------------------------")
 
     return xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest
 
 
 def objective(trial):
-    xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest = loadDataset(ifPrint=False)
+    xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest = loadDataset()
 
     # create dataset for lightgbm
     lgbTrain = lgb.Dataset(xTrain, yTrain)
@@ -206,21 +199,21 @@ def objective(trial):
         'objective': 'regression',
         'metric': {'l2', 'l1'},
         'num_threads': 4,   # real CPU cores in Surface Book 2, modify this in other machine
-        'num_leaves': 555,  # already fine tune
-        'learning_rate': 0.048,  # already fine tune
-        'feature_fraction': 0.607,  # already fine tune
-        'bagging_fraction': 0.607,  # already fine tune
-        'bagging_freq': 8,  # already fine tune
+        'num_leaves': 555,
+        'learning_rate': 0.048,
+        'feature_fraction': 0.607,
+        'bagging_fraction': 0.607,
+        'bagging_freq': 8,
         'verbose': 0,
-        'min_data_in_leaf': 530  # already fine tune
+        'min_data_in_leaf': 530
     }
 
     # train
     gbm = lgb.train(params,
                     lgbTrain,
-                    num_boost_round=20,  # already fine tune
+                    num_boost_round=20,
                     valid_sets=lgbEval,
-                    early_stopping_rounds=18)  # already fine tune
+                    early_stopping_rounds=18)
 
     # predict
     yPred = gbm.predict(xTest)
@@ -245,6 +238,8 @@ def autoFineTune():
 
 
 def trainModel():
+    print ("------------------------ Train model... ------------------------")
+
     xTrain, yTrain, xEvaluate, yEvaluate, xTest, yTest = loadDataset()
 
     # create dataset for lightgbm
@@ -257,37 +252,37 @@ def trainModel():
         'objective': 'regression',
         'metric': {'l2', 'l1'},
         'num_threads': 4,   # real CPU cores in Surface Book 2, modify this in other machine
-        'num_leaves': 2**10-1,
-        'learning_rate': 0.2,
-        'feature_fraction': 0.6,
-        'bagging_fraction': 0.6,
-        'bagging_freq': 8,
+        'num_leaves': 2**10-1,  # already fine tune
+        'learning_rate': 0.2,   # already fine tune
+        'feature_fraction': 0.6,    # already fine tune
+        'bagging_fraction': 0.6,    # already fine tune
+        'bagging_freq': 8,  # already fine tune
         'verbose': 0,
-        'min_data_in_leaf': 530
+        'min_data_in_leaf': 530 # already fine tune
     }
 
     print('Starting training...')
-    # train
     gbm = lgb.train(params,
                     lgbTrain,
-                    num_boost_round=200,
+                    num_boost_round=200,    # already fine tune
                     valid_sets=lgbEval,
-                    early_stopping_rounds=10)
+                    early_stopping_rounds=10)   # already fine tune
 
     print('Saving model...')
-    # save model to file
+    if not os.path.exists("model"):
+        os.mkdir("model")
     gbm.save_model('model/model.txt')
 
     print('Starting predicting...')
-    # predict
     yPred = gbm.predict(xTest, num_iteration=gbm.best_iteration)
     print (yPred[:10])
-    # eval
     print('The rmse of prediction is:', mean_squared_error(yTest, yPred) ** 0.5)
 
+    print ("------------------------ Done. ------------------------")
 
-def testModel(ifLoadDatasetFromFile = True):
-    print('Loading data...')
+
+def testModel(ifLoadDatasetFromFile=True):
+    print ("------------------------ Test model... ------------------------")
 
     # read config file
     cf = configparser.ConfigParser()
@@ -299,14 +294,14 @@ def testModel(ifLoadDatasetFromFile = True):
             ifLoadDatasetFromFile = False
 
     if not ifLoadDatasetFromFile:
-        # create the dataset
-        folderOfTestDataset = "data/testDataset"
+        folderToSaveTestDataset = getFolderNameInConfig("folderToSaveTestDataset")    # the folder to save test dataset
+        
         count = 0
-        for file in os.listdir(folderOfTestDataset):
+        for file in os.listdir(folderToSaveTestDataset):
             if count % 100 == 0:
                 print ("count = %s\tfile=%s" % (count, file))
 
-            filePath = os.path.join(folderOfTestDataset, file)
+            filePath = os.path.join(folderToSaveTestDataset, file)
             dfSingle = pd.read_csv(filePath, index_col=0)
             dfSingle.reset_index(drop=True, inplace=True)
             dfSingle = dfSingle.T.fillna(0)
@@ -329,6 +324,8 @@ def testModel(ifLoadDatasetFromFile = True):
     print ("dfTest = \n%s" % dfTest)
 
     # load model to predict
+    if not os.path.exists("model"):
+        os.mkdir("model")
     bst = lgb.Booster(model_file='model/model.txt')
     yPred = bst.predict(dfTest)
 
@@ -353,6 +350,7 @@ def testModel(ifLoadDatasetFromFile = True):
     ax.spines['top'].set_color('none')
     plt.savefig("./image/adjust_factor_in_testing.png")
 
+    print ("------------------------ Done. ------------------------")
 
 if __name__ == "__main__":
     fire.Fire()

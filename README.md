@@ -33,12 +33,12 @@ To find more details, please refer to [dataPrepare](doc/dataPrepare.md).
 ### training
 You can train the model and evaluate it like this.
 ```
-python src/train/trainGBDT.py trainModel
+python src/trainGBDT.py trainModel
 ```
 ### evaluate
 Get the adjusted factor to latest day.
 ```
-python src/train/trainGBDT.py testModel --ifLoadDatasetFromFile=True
+python src/trainGBDT.py testModel --ifLoadDatasetFromFile=True
 ```
 
 We get the adjustFactorToLatestDay to dayInStandard.
@@ -46,7 +46,7 @@ We get the adjustFactorToLatestDay to dayInStandard.
 
 I try to use optuna to fine tune automatically, but the result is not good, so I quit it.
 ```
-python src/train/trainGBDT.py autoFineTune
+python src/trainGBDT.py autoFineTune
 ```
 
 After we get the adjusted factor, we can evaluate it again.
