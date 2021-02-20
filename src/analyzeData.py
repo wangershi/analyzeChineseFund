@@ -220,7 +220,7 @@ def analyzeHistoricalValue(ifUseNewIssues = True, ifUseOldIssues = True, ifUseWa
     print ("------------------------ Done. ------------------------")
 
 
-def getHistoricalValue():
+def getHistoricalValue(fund_to_specify_date="000934"):
     print ("------------------------ Begin to get historical value... ------------------------")
     
     # read config file
@@ -244,7 +244,7 @@ def getHistoricalValue():
     month = latestFundInformation.split(".")[0].split("_")[-1]
 
     # use one fund be the standard of trading day
-    dfStandard = pd.read_csv(os.path.join(folderToSaveHistoricalValue, "000934_%s.csv" % month))
+    dfStandard = pd.read_csv(os.path.join(folderToSaveHistoricalValue, "_%s.csv" % (fund_to_specify_date, month)))
     dfStandard['Date'] = pd.to_datetime(dfStandard['Date'])
     dfStandard = dfStandard.head(daysRangeToAnalyze)
     dateStandard = dfStandard["Date"]

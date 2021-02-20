@@ -22,6 +22,11 @@ Use below commands to crawl the data.
 python src/crawlFundData.py crawlAllFundData --ifCrawlBasicInformation=True --ifCrawlPortfolio=True --ifCrawlHistoricalValue=True
 ```
 
+Dump historical data into bin using [Qlib](https://github.com/microsoft/qlib).
+```
+python src/dump_bin.py dump_all --csv_path data/historicalValue --qlib_dir data/bin --freq day --date_field_name Date --exclude_fields Dividends --fund_to_specify_date 000934
+```
+
 Prepare data to train.
 ```
 python src/trainGBDT.py prepareTrainDataset
