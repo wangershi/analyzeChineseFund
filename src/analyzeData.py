@@ -67,7 +67,7 @@ def analyzeHistoricalValue(ifUseNewIssues = True, ifUseOldIssues = True, ifUseWa
     calendarBetweenFirstDayAndLastDay = D.calendar(freq='day', start_time=firstDay, end_time=lastDay)
     firstDayToAnalyze = calendarBetweenFirstDayAndLastDay[0]
     lastDayToAnalyze = calendarBetweenFirstDayAndLastDay[-1]
-    daysRangeToAnalyze = (lastDayToAnalyze - firstDayToAnalyze).days + 1    # 1095
+    daysRangeToAnalyze = (lastDayToAnalyze - firstDayToAnalyze).days    # 1094
 
     count = 0
     riskListForOldIssues = []
@@ -121,7 +121,7 @@ def analyzeHistoricalValue(ifUseNewIssues = True, ifUseOldIssues = True, ifUseWa
             # TODO: how about fund 519858, which trade in 2018-01-28 (Sunday)
             firstDayInThisFund = day[day.first_valid_index()]   # 2018-02-12 00:00:00, 2018-02-10 is Satuaday
             lastDayInThisFund = day[day.last_valid_index()] # 2021-02-10 00:00:00
-            daysRange = (lastDayInThisFund - firstDayInThisFund).days + 1   # 1095
+            daysRange = (lastDayInThisFund - firstDayInThisFund).days   # 1094
 
             # get the value in important days
             earliestNetValue = df[df['datetime'] == firstDayInThisFund]["AccumulativeNetAssetValue"].tolist()[0] # 3.49
