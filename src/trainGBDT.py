@@ -1,12 +1,15 @@
 # coding: utf-8
 import lightgbm as lgb
 import pandas as pd
+from pandas.tseries.offsets import DateOffset
 from sklearn.metrics import mean_squared_error
 import fire
 import os
 import random
 from scipy import sparse
 import numpy as np
+import qlib
+from qlib.data import D
 import optuna
 import configparser
 import datetime
@@ -20,7 +23,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 
 from src.util import getFolderNameInConfig
-from src.analyzeData import getSparseMatrixForPortfolioInAllFunds, getHistoricalValue
+from src.analyzeData import getSparseMatrixForPortfolioInAllFunds
 
 def prepareTrainDataset(ifSavePortfolioIndex=False):
     print ("------------------------ Begin to prepare train dataset... ------------------------")
@@ -28,22 +31,32 @@ def prepareTrainDataset(ifSavePortfolioIndex=False):
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
-    daysRangeInOneYear = int(cf.get("Parameter", "daysRangeInOneYear"))
+
+    minDaysRange = int(cf.get("Parameter", "minDaysRange"))
+
+    # offset of days
     numberOfYears = int(cf.get("Parameter", "numberOfYears"))
-    daysRange = daysRangeInOneYear * numberOfYears  # 756
-    updateEveryMonth = cf.get("Parameter", "updateEveryMonth")
-    folderOfDayInStandard = getFolderNameInConfig("folderOfDayInStandard")    # the folder of data which day is standard
+    numberOfMonths = int(cf.get("Parameter", "numberOfMonths"))
+    numberOfDays = int(cf.get("Parameter", "numberOfDays"))
+
+    # qlib init
+    qlib.init(provider_uri='data/bin')
+
+    # use one fund be the standard of trading day
+    calendar = D.calendar(freq='day')
+    lastDay = calendar[-1]  # 2021-02-10 00:00:00
+    firstDay = lastDay - DateOffset(years=numberOfYears, months=numberOfMonths, days=numberOfDays)  # 2018-02-10 00:00:00
     
+    # exclude the influence of days without trading
+    calendarBetweenFirstDayAndLastDay = D.calendar(freq='day', start_time=firstDay, end_time=lastDay)
+    firstDayToAnalyze = calendarBetweenFirstDayAndLastDay[0]
+    lastDayToAnalyze = calendarBetweenFirstDayAndLastDay[-1]
+    
+    # get portfolio
     pathOfDfSparsePortfolio = cf.get("Analyze", "pathOfDfSparsePortfolio")
     if not os.path.exists(pathOfDfSparsePortfolio):
         getSparseMatrixForPortfolioInAllFunds()
-    
-    # didn't generate dayInStandard before
-    if len(os.listdir(folderOfDayInStandard)) <= 0:
-        getHistoricalValue()
-
     dfSparsePortfolio = pd.read_csv(pathOfDfSparsePortfolio, index_col=0)
-    header = dfSparsePortfolio.columns[1:].to_list()
     
     if ifSavePortfolioIndex:
         dfPortfolioIndex = dfSparsePortfolio["FullElements"]
@@ -52,60 +65,87 @@ def prepareTrainDataset(ifSavePortfolioIndex=False):
     folderToSaveTrainDataset = getFolderNameInConfig("folderToSaveTrainDataset")    # the folder to save train dataset
     folderToSaveTestDataset = getFolderNameInConfig("folderToSaveTestDataset")    # the folder to save test dataset
 
-    month = "%s" % datetime.datetime.now().strftime(updateEveryMonth)   # 202101
     count = 0
-    for fundCode in header:
+    instruments = D.instruments(market='all')
+    for file in D.list_instruments(instruments=instruments, as_list=True):
+        fundCode = file.split("_")[0]   # 000001
+        
         if count % 100 == 0:
             print ("count = %s\tfundCode=%s" % (count, fundCode))
 
-        pathFund = os.path.join(folderOfDayInStandard, "%s_%s.csv" % (fundCode, month))
-        if not os.path.exists(pathFund):
-            continue
-        dfFund = pd.read_csv(pathFund, index_col=0)
-
-        maxDayInStandard = dfFund["DayInStandard"].max()    # 755
-        # get train dataset which found more than 3 years
-        if (maxDayInStandard >= (daysRange - 1)):
-            # must have value in latest day
-            if (dfFund["DayInStandard"].min() != 0):
+        try:
+            # can't find portfolio for this fund
+            try:
+                dfSparsePortfolioForThisFund = dfSparsePortfolio[[fundCode]]
+            except:
                 continue
 
-            # get the earliest value
-            earliestDayForFund = dfFund[dfFund["DayInStandard"] == (daysRange - 1)] # 1.3769999999999998
-            valueInEarliestDay = earliestDayForFund.iloc[0]["AccumulativeNetAssetValue"]    # 1.4696
+            # read file and remove empty line
+            df = D.features([file], [
+                '$AccumulativeNetAssetValue'
+                ], start_time=firstDayToAnalyze, end_time=lastDayToAnalyze)
+            df.columns = [
+                'AccumulativeNetAssetValue'
+                ]
+            #df = df.unstack(level=0)
+            df["datetime"] = df.index.levels[1]
 
-            # count the adjust factor, we can get the value in 3 years by adjustFactorToLatestDay * (value[0]/value[day])
-            dfFund["adjustFactorToLatestDay"] =  dfFund["AccumulativeNetAssetValue"] / valueInEarliestDay
-            dfFund = dfFund[["DayInStandard", "adjustFactorToLatestDay"]]
+            # reset the index
+            df = df.dropna(axis=0, subset=['datetime']).reset_index(drop=True)
 
-            # abandon the latest day, it's meaningless
-            dfFund.reset_index(drop=True, inplace=True)
-            dfFund = dfFund.T.drop(labels=0, axis=1).T
-            # reset index to concat with dfSparsePortfolioForThisFund
-            dfFund.reset_index(drop=True, inplace=True)
-            dfFund = dfFund.T
+            # like http://fundf10.eastmoney.com/jjjz_010476.html, the return in 30 days is 26%, so the annualized return is too high
+            if df.shape[0] <= minDaysRange:
+                continue
 
-            # duplicate to concat with dfSparsePortfolioForThisFund
-            dfSparsePortfolioForThisFund = pd.concat([dfSparsePortfolio[[fundCode]].T]*dfFund.shape[1])
-            # reset index to concat with dfSparsePortfolioForThisFund
-            dfSparsePortfolioForThisFund = dfSparsePortfolioForThisFund.reset_index(drop=True).T
+            # count the days between first day and last day
+            day = df['datetime']
+            # TODO: how about fund 519858, which trade in 2018-01-28 (Sunday)
+            firstDayInThisFund = day[day.first_valid_index()]   # 2018-02-12 00:00:00, 2018-02-10 is Satuaday
+            lastDayInThisFund = day[day.last_valid_index()] # 2021-02-10 00:00:00
 
-            dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfFund], axis=0)
-            dfDataset.to_csv(os.path.join(folderToSaveTrainDataset, "%s.csv" % fundCode))
-        else:
-            dfInLatestDay = dfFund[dfFund["DayInStandard"] == maxDayInStandard]
+            # must have value in latest day
+            if (lastDayInThisFund - lastDayToAnalyze).days != 0:
+                continue
 
-            dfInLatestDay[fundCode] = dfInLatestDay["DayInStandard"]
-            dfInLatestDay = dfInLatestDay[[fundCode]]
+            df['daysDiffWithLastDay'] = df['datetime'].apply(lambda x: (lastDayInThisFund - x).days)
 
-            dfSparsePortfolioForThisFund = dfSparsePortfolio[[fundCode]]
+            # get the value in important days
+            lastestNetValue = df[df['datetime'] == lastDayInThisFund]["AccumulativeNetAssetValue"].tolist()[0] # 4.046
 
-            dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfInLatestDay], axis=0)
-            dfDataset.to_csv(os.path.join(folderToSaveTestDataset, "%s.csv" % fundCode))
+            # get train dataset which found more than 3 years
+            if (firstDayInThisFund - firstDayToAnalyze).days <= 0:
+                 # count the adjust factor, we can get the value in 3 years by adjustFactorToLatestDay * (value[0]/value[day])
+                df["adjustFactorToLatestDay"] =  df["AccumulativeNetAssetValue"] / lastestNetValue
+                df = df[["daysDiffWithLastDay", "adjustFactorToLatestDay"]]
 
-        count += 1
+                # abandon the latest day, it's meaningless
+                df.reset_index(drop=True, inplace=True)
+                df = df.T.drop(labels=0, axis=1).T
+                # reset index to concat with dfSparsePortfolioForThisFund
+                df.reset_index(drop=True, inplace=True)
+                df = df.T
+
+                # duplicate to concat with dfSparsePortfolioForThisFund
+                dfSparsePortfolioForThisFund = pd.concat([dfSparsePortfolioForThisFund.T]*df.shape[1])
+                # reset index to concat with dfSparsePortfolioForThisFund
+                dfSparsePortfolioForThisFund = dfSparsePortfolioForThisFund.reset_index(drop=True).T
+
+                dfDataset = pd.concat([dfSparsePortfolioForThisFund, df], axis=0)
+                dfDataset.to_csv(os.path.join(folderToSaveTrainDataset, "%s.csv" % fundCode))
+            else:
+                dfInFirstDay = df[df['datetime'] == firstDayInThisFund].reset_index(drop=True)
+                dfInFirstDay = dfInFirstDay[["daysDiffWithLastDay"]].T
+                dfInFirstDay[fundCode] = dfInFirstDay[0]
+                dfDataset = pd.concat([dfSparsePortfolioForThisFund, dfInFirstDay[[fundCode]]], axis=0)
+                dfDataset.to_csv(os.path.join(folderToSaveTestDataset, "%s.csv" % fundCode))
+
+            count += 1
+        except Exception as e:
+            print ("fundCode = %s\terror = %s" % (fundCode, e))
+            continue        
 
     print ("------------------------ Done. ------------------------")
+
 
 def loadDataset(ifLoadDatasetFromFile=True, ratioOfTrainInWholeDataset=0.8, ratioOfTrainValInWholeDataset=0.9):
     '''
@@ -312,8 +352,6 @@ def testModel(ifLoadDatasetFromFile=True):
                 dfTest = pd.concat([dfTest, dfSingle], axis=0)
 
             count += 1
-
-        print ("count = %s" % count)
 
         # save df
         dfTest.to_csv("data/dfTest.csv")

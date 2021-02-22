@@ -9,7 +9,7 @@ You can set any arg be False to ignore some informations, all commands are exect
 ### analyze historical value
 Use below commands to get the return and risk in 3 years for all funds.
 ```
-python src/analyzeData.py analyzeHistoricalValue --ifUseNewIssues=True --ifUseOldIssues=True --ifUseWatchList=False --ifUseAdjustFactorToLatestDay=False --ifPrintFundCode=False --fund_to_specify_date=000934
+python src/analyzeData.py analyzeHistoricalValue --ifUseNewIssues=True --ifUseOldIssues=True --ifUseWatchList=False --ifUseAdjustFactorToLatestDay=False --ifPrintFundCode=False
 ```
 
 The result:

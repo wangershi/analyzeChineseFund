@@ -29,7 +29,7 @@ python src/dump_bin.py dump_all --csv_path data/historicalValue --qlib_dir data/
 
 Prepare data to train.
 ```
-python src/trainGBDT.py prepareTrainDataset
+python src/trainGBDT.py prepareTrainDataset --ifSavePortfolioIndex=False
 ```
 
 To find more details, please refer to [dataPrepare](doc/dataPrepare.md).
