@@ -43,7 +43,7 @@ python src/trainGBDT.py trainModel
 ### evaluate
 Get the adjusted factor to latest day.
 ```
-python src/trainGBDT.py testModel --ifLoadDatasetFromFile=True
+python src/trainGBDT.py testModel
 ```
 
 We get the adjustFactorToLatestDay to dayInStandard.

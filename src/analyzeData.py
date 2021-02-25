@@ -388,44 +388,92 @@ def getAverageSlopeForFundsInSameRange(ifUseAdjustFactorToLatestDay=True):
     print ("------------------------ Done. ------------------------")
 
 
-def getCorrelationMatrixForOneFund(ifGetCorrFromFile = True, ifGetDfMergeFromFile = True, fundCodeToAnalyze="110011"):
-    print ("------------------------ Begin to get Pearson's correlation matrix for fund '%s'... ------------------------" % fundCodeToAnalyze)
-    
+def getDfMerge():
+    print ("------------------------ Begin to get dfMerge... ------------------------")
+
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
-    folderOfDayInStandard = cf.get("Analyze", "folderOfDayInStandard")
+    
+    # offset of days
+    numberOfYears = int(cf.get("Parameter", "numberOfYears"))
+    numberOfMonths = int(cf.get("Parameter", "numberOfMonths"))
+    numberOfDays = int(cf.get("Parameter", "numberOfDays"))
 
-    listOfFunds = []
+    # use one fund be the standard of trading day
+    calendar = D.calendar(freq='day')
+    lastDay = calendar[-1]  # 2021-02-10 00:00:00
+    firstDay = lastDay - DateOffset(years=numberOfYears, months=numberOfMonths, days=numberOfDays)  # 2018-02-10 00:00:00
+    
+    # exclude the influence of days without trading
+    calendarBetweenFirstDayAndLastDay = D.calendar(freq='day', start_time=firstDay, end_time=lastDay)
+    firstDayToAnalyze = calendarBetweenFirstDayAndLastDay[0]
+    lastDayToAnalyze = calendarBetweenFirstDayAndLastDay[-1]
+
     count = 0
-    for file in os.listdir(folderOfDayInStandard):
+
+    instruments = D.instruments(market='all')
+    for file in D.list_instruments(instruments=instruments, as_list=True):
         fundCode = file.split("_")[0]
-        listOfFunds.append(fundCode)
+
+        if count <= 700:
+            count += 1
+            continue
         
-        if not ifGetCorrFromFile and not ifGetDfMergeFromFile:
-            if count % 100 == 0:
-                print ("count = %s\tfundCode = %s" % (count, fundCode))
+        if count % 100 == 0:
+            print ("count = %s\tfundCode = %s" % (count, fundCode))
 
-            pathFund = os.path.join(folderOfDayInStandard, file)
-            df = pd.read_csv(pathFund)
-            newName = "AccumulativeNetAssetValue_%s" % fundCode
-            df[newName] = df["AccumulativeNetAssetValue"]
-            df = df[["DayInStandard", newName]]
+        # read file and remove empty line
+        df = D.features([file], [
+            '$AccumulativeNetAssetValue'
+            ], start_time=firstDayToAnalyze, end_time=lastDayToAnalyze)
+        df.columns = [
+            "AccumulativeNetAssetValue_%s" % fundCode
+            ]
+        #df = df.unstack(level=0)
+        try:
+            df["datetime"] = df.index.levels[1]
+        except:
+            continue
 
-            if count == 0:
-                dfMerge = df
-            else:
-                dfMerge = pd.merge(dfMerge, df, on=['DayInStandard'], how='outer')
+        # reset the index
+        df = df.dropna(axis=0, subset=['datetime']).reset_index(drop=True)
+
+        try:
+            dfMerge = pd.merge(dfMerge, df, on=['datetime'], how='outer')
+        except:
+            dfMerge = df
 
         count += 1
 
-    if not ifGetCorrFromFile:
-        if not ifGetDfMergeFromFile:
-            dfMerge.to_csv("data/dfMerge.csv")
-        else:
-            dfMerge = pd.read_csv("data/dfMerge.csv", index_col=0)
+    dfMerge.to_csv("data/dfMerge.csv")
 
-        dfMerge = dfMerge.drop(labels='DayInStandard',axis=1)
+    print ("------------------------ Done. ------------------------")
+
+    return dfMerge
+
+
+def getCorrelationMatrixForOneFund(ifGetCorrFromFile = True, ifGetDfMergeFromFile = True, fundCodeToAnalyze="110011"):
+    print ("------------------------ Begin to get Pearson's correlation matrix for fund '%s'... ------------------------" % fundCodeToAnalyze)
+    
+    # qlib init
+    qlib.init(provider_uri='data/bin')
+
+    if ifGetCorrFromFile:
+        if not os.path.exists("data/corr.csv"):
+            ifGetCorrFromFile = False
+
+    if not ifGetCorrFromFile:
+        if ifGetDfMergeFromFile:
+            if not os.path.exists("data/dfMerge.csv"):
+                ifGetDfMergeFromFile = False
+
+        if ifGetDfMergeFromFile:
+            dfMerge = pd.read_csv("data/dfMerge.csv", index_col=0)
+        else:
+            dfMerge = getDfMerge()
+
+        dfMerge = dfMerge.drop(labels='datetime',axis=1)
 
         # count correlation
         corr = dfMerge.corr()
@@ -434,14 +482,16 @@ def getCorrelationMatrixForOneFund(ifGetCorrFromFile = True, ifGetDfMergeFromFil
         corr = pd.read_csv("data/corr.csv", index_col=0)
 
     print ("corr = %s" % corr)
-    print ("len(listOfFunds) = %s" % len(listOfFunds))
 
     corrFund = corr["AccumulativeNetAssetValue_%s" % fundCodeToAnalyze].dropna(axis=0)
 
     dictOfCorr = {}
     minNumber = 0.98
     nameFund = "%s" % fundCodeToAnalyze
-    for fund in listOfFunds:
+
+    instruments = D.instruments(market='all')
+    for file in D.list_instruments(instruments=instruments, as_list=True):
+        fund = file.split("_")[0]
         if fund == nameFund:
             continue
 
@@ -479,39 +529,25 @@ def getCorrelationMatrixForOneFund(ifGetCorrFromFile = True, ifGetDfMergeFromFil
 
 def getCorrelationMatrixForAllFunds(ifGetCorrFromFile = True, ifGetDfMergeFromFile = True):
     print ("Begin to get Pearson's correlation matrix for all funds...")
-    # read config file
-    cf = configparser.ConfigParser()
-    cf.read("config/config.ini")
-    folderOfDayInStandard = cf.get("Analyze", "folderOfDayInStandard")
 
-    listOfFunds = []
-    count = 0
-    for file in os.listdir(folderOfDayInStandard):
-        fundCode = file.split("_")[0]
-
-        listOfFunds.append(fundCode)
-
-        if not ifGetCorrFromFile and not ifGetDfMergeFromFile:
-            pathFund = os.path.join(folderOfDayInStandard, file)
-            df = pd.read_csv(pathFund)
-            newName = "AccumulativeNetAssetValue_%s" % fundCode
-            df[newName] = df["AccumulativeNetAssetValue"]
-            df = df[["DayInStandard", newName]]
-
-            if count == 0:
-                dfMerge = df
-            else:
-                dfMerge = pd.merge(dfMerge, df, on=['DayInStandard'], how='outer')
-
-        count += 1
+    # qlib init
+    qlib.init(provider_uri='data/bin')
+    
+    if ifGetCorrFromFile:
+        if not os.path.exists("data/corr.csv"):
+            ifGetCorrFromFile = False
 
     if not ifGetCorrFromFile:
-        if not ifGetDfMergeFromFile:
-            dfMerge.to_csv("data/dfMerge.csv")
-        else:
-            dfMerge = pd.read_csv("data/dfMerge.csv", index_col=0)
+        if ifGetDfMergeFromFile:
+            if not os.path.exists("data/dfMerge.csv"):
+                ifGetDfMergeFromFile = False
 
-        dfMerge = dfMerge.drop(labels='DayInStandard',axis=1)
+        if ifGetDfMergeFromFile:
+            dfMerge = pd.read_csv("data/dfMerge.csv", index_col=0)
+        else:
+            dfMerge = getDfMerge()
+
+        dfMerge = dfMerge.drop(labels='datetime',axis=1)
 
         # count correlation
         corr = dfMerge.corr()
@@ -520,11 +556,13 @@ def getCorrelationMatrixForAllFunds(ifGetCorrFromFile = True, ifGetDfMergeFromFi
         corr = pd.read_csv("data/corr.csv", index_col=0)
 
     print (corr)
-    print ("len(listOfFunds) = %s" % len(listOfFunds))
 
     dictOfMaxCorr = {}
-    minNumber = 0.98
-    for fund in listOfFunds:
+    minNumber = 0.9
+
+    instruments = D.instruments(market='all')
+    for file in D.list_instruments(instruments=instruments, as_list=True):
+        fund = file.split("_")[0]
         nameDf = "AccumulativeNetAssetValue_%s" % fund
 
         # nameDf don't exist in corr
@@ -535,7 +573,7 @@ def getCorrelationMatrixForAllFunds(ifGetCorrFromFile = True, ifGetDfMergeFromFi
             continue
 
         maxCorr = float(corrWithoutSelf.max())
-        maxCorr = float("%.3f" % maxCorr)
+        maxCorr = float("%.2f" % maxCorr)
         if maxCorr <= minNumber:
             maxCorr = minNumber
         if maxCorr not in dictOfMaxCorr:
@@ -744,11 +782,18 @@ def analyzeCosineForOneFund(nameFund="110011"):
 
 def compareCosineAndPearsonCorr(ifFetchCosineFundFromFile=True, ifFetchCorrFundFromFile=True, nameFund="110011"):
     print ("------------------------ Begin to compare consine and Pearson's corr... ------------------------")
-
+    
     # read config file
     cf = configparser.ConfigParser()
     cf.read("config/config.ini")
     pathOfDfCosineSimilarityForPortfolio = cf.get("Analyze", "pathOfDfCosineSimilarityForPortfolio")
+
+    if not os.path.exists(pathOfDfCosineSimilarityForPortfolio):
+        getCosineOfSparseMatrixForPortfolio()
+
+    if ifFetchCosineFundFromFile:
+        if not os.path.exists("data/cosineFundFor%s.csv" % nameFund):
+            ifFetchCosineFundFromFile = False
 
     if not ifFetchCosineFundFromFile:
         dfCosineSimilarityForPortfolio = pd.read_csv(pathOfDfCosineSimilarityForPortfolio, index_col=0)
@@ -756,20 +801,25 @@ def compareCosineAndPearsonCorr(ifFetchCosineFundFromFile=True, ifFetchCorrFundF
         dfCosineSimilarityForPortfolio.set_index(header, inplace=True)
         cosineFund = dfCosineSimilarityForPortfolio[nameFund].dropna(axis=0)
         cosineFund.to_csv("data/cosineFundFor%s.csv" % nameFund)
+    else:
+        cosineFund = pd.read_csv("data/cosineFundFor%s.csv" % nameFund, index_col=0)
         
-    cosineFund = pd.read_csv("data/cosineFundFor%s.csv" % nameFund, index_col=0)
     cosineFund["b"] = cosineFund.T.columns
     cosineFund["a"] = "AccumulativeNetAssetValue_" + cosineFund["b"].apply(str)
     cosineFund = cosineFund.drop(labels='b',axis=1)
     print ("cosineFund = \n%s" % cosineFund)
 
+    if ifFetchCorrFundFromFile:
+        if not os.path.exists("data/corrFundFor%s.csv" % nameFund):
+            ifFetchCorrFundFromFile = False
+
     if not ifFetchCorrFundFromFile:
         corr = pd.read_csv("data/corr.csv", index_col=0)
-        nameFund = "AccumulativeNetAssetValue_%s" % nameFund
-        corrFund = corr[nameFund].dropna(axis=0)
+        corrFund = corr["AccumulativeNetAssetValue_%s" % nameFund].dropna(axis=0)
         corrFund.to_csv("data/corrFundFor%s.csv" % nameFund)
-
+        
     corrFund = pd.read_csv("data/corrFundFor%s.csv" % nameFund, index_col=0)
+
     corrFund["a"] = corrFund.T.columns
     
     df = pd.merge(cosineFund, corrFund, on=['a'], how='outer')

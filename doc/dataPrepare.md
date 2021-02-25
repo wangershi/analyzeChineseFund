@@ -27,7 +27,7 @@ We can get the average of annualized return, it seems the average return varies 
 ### fund managers tend to use similar strategy
 We can use Pearson's correlation method to get the correlation between fund '110011' and other funds.
 ```
-python src/analyzeData.py getCorrelationMatrixForOneFund --ifGetCorrFromFile=False --ifGetDfMergeFromFile=False --fundCodeToAnalyze=110011
+python src/analyzeData.py getCorrelationMatrixForOneFund --fundCodeToAnalyze=110011
 ```
 If intermediate file are generated, we can set related flags True.
 ![correlation_110011](image/correlation_110011.png)
@@ -35,7 +35,7 @@ If intermediate file are generated, we can set related flags True.
 ### confirm it in all funds
 I analyze the Pearsom's correlation matrix for all funds.
 ```
-python src/analyzeData.py getCorrelationMatrixForAllFunds --ifGetCorrFromFile=False --ifGetDfMergeFromFile=False
+python src/analyzeData.py getCorrelationMatrixForAllFunds
 ```
 ![maximum_correlation](image/maximum_correlation.png)
 
@@ -48,6 +48,6 @@ python src/analyzeData.py analyzeCosineForOneFund --nameFund=110011
 
 Get the relation between cosine relation and Pearson's correlation.
 ```
-python src/analyzeData.py compareCosineAndPearsonCorr --ifFetchCosineFundFromFile=False --ifFetchCorrFundFromFile=False --nameFund=110011
+python src/analyzeData.py compareCosineAndPearsonCorr --nameFund '110011'
 ```
 ![cosine_PearsonCorr](image/cosine_PearsonCorr_110011.png)

@@ -25,6 +25,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 from src.util import getFolderNameInConfig
 from src.analyzeData import getSparseMatrixForPortfolioInAllFunds
 
+
 def prepareTrainDataset(ifSavePortfolioIndex=False):
     print ("------------------------ Begin to prepare train dataset... ------------------------")
 
@@ -110,12 +111,12 @@ def prepareTrainDataset(ifSavePortfolioIndex=False):
             df['daysDiffWithLastDay'] = df['datetime'].apply(lambda x: (lastDayInThisFund - x).days)
 
             # get the value in important days
-            lastestNetValue = df[df['datetime'] == lastDayInThisFund]["AccumulativeNetAssetValue"].tolist()[0] # 4.046
+            netValueInFirstDay = df[df['datetime'] == firstDayInThisFund]["AccumulativeNetAssetValue"].tolist()[0] # 4.046
 
             # get train dataset which found more than 3 years
             if (firstDayInThisFund - firstDayToAnalyze).days <= 0:
                  # count the adjust factor, we can get the value in 3 years by adjustFactorToLatestDay * (value[0]/value[day])
-                df["adjustFactorToLatestDay"] =  df["AccumulativeNetAssetValue"] / lastestNetValue
+                df["adjustFactorToLatestDay"] =  df["AccumulativeNetAssetValue"] / netValueInFirstDay
                 df = df[["daysDiffWithLastDay", "adjustFactorToLatestDay"]]
 
                 # abandon the latest day, it's meaningless
@@ -380,8 +381,6 @@ def testModel(ifLoadDatasetFromFile=True):
         dfTest.plot.scatter(x=xMax, y='yPred', c='k')
     plt.xlabel("Count of trading days")
     plt.ylabel("Adjusted factor to latest day")
-    plt.xlim((0, 800))
-    plt.ylim((0.5, 2.75))
     ax = plt.gca()
     # no line in right and top border
     ax.spines['right'].set_color('none')
