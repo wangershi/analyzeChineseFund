@@ -9,16 +9,27 @@ This project is a homework when I study in the AI School 2020, Microsoft, you ca
 git clone https://github.com/wangershi/analyzeChineseFund.git
 ```
 
+## install related packages
+You should run the scripts in Python3 and install below packages.
+```
+pip install -r .\requirements.txt
+```
+
 ## data prepare
 
 Use below commands to crawl the data.
 ```
-python src/data/crawlFundData.py crawlAllFundData
+python src/crawlFundData.py crawlAllFundData --ifCrawlBasicInformation=True --ifCrawlPortfolio=True --ifCrawlHistoricalValue=True
 ```
 
-Prepare data to train
+Dump historical data into bin using [Qlib](https://github.com/microsoft/qlib).
 ```
-python src/data/prepareDataset.py prepareTrainDataset
+python src/dump_bin.py dump_all --csv_path data/historicalValue --qlib_dir data/bin --freq day --date_field_name Date --exclude_fields Dividends --fund_to_specify_date 000934
+```
+
+Prepare data to train.
+```
+python src/trainGBDT.py prepareTrainDataset --ifSavePortfolioIndex=False
 ```
 
 To find more details, please refer to [dataPrepare](doc/dataPrepare.md).
@@ -27,12 +38,12 @@ To find more details, please refer to [dataPrepare](doc/dataPrepare.md).
 ### training
 You can train the model and evaluate it like this.
 ```
-python src/train/trainGBDT.py trainModel
+python src/trainGBDT.py trainModel
 ```
 ### evaluate
 Get the adjusted factor to latest day.
 ```
-python src/train/trainGBDT.py testModel --ifLoadDatasetFromFile=True
+python src/trainGBDT.py testModel
 ```
 
 We get the adjustFactorToLatestDay to dayInStandard.
@@ -40,12 +51,12 @@ We get the adjustFactorToLatestDay to dayInStandard.
 
 I try to use optuna to fine tune automatically, but the result is not good, so I quit it.
 ```
-python src/train/trainGBDT.py autoFineTune
+python src/trainGBDT.py autoFineTune
 ```
 
 After we get the adjusted factor, we can evaluate it again.
 ```
-python src/data/analyzeData.py getAverageSlopeForFundsInSameRange --ifUseAdjustFactorToLatestDay=True
+python src/analyzeData.py getAverageSlopeForFundsInSameRange --ifUseAdjustFactorToLatestDay=True
 ```
 
 The model flatten the distribution of average return.
@@ -55,6 +66,6 @@ The standard deviation of average return drop from 0.0520 to 0.0175.
 
 Besides, we can get the  return and risk after adjusted.
 ```
-python src/data/analyzeData.py analyzeHistoricalValue --ifUseNewIssues=True --ifUseOldIssues=True --ifUseWatchList=False --ifUseAdjustFactorToLatestDay=True --ifPrintFundCode=False
+python src/analyzeData.py analyzeHistoricalValue --ifUseNewIssues=True --ifUseOldIssues=True --ifUseWatchList=False --ifUseAdjustFactorToLatestDay=True --ifPrintFundCode=False
 ```
 ![risk_return_noWatchlist_useNewIssues_useOldIssues_useAdjustFactor](image/risk_return_noWatchlist_useNewIssues_useOldIssues_useAdjustFactor.png)
